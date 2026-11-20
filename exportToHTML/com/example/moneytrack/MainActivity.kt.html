@@ -1,0 +1,2045 @@
+<html>
+<head>
+<title>MainActivity.kt</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #f3505c;}
+.s1 { color: #cacaca;}
+.s2 { color: #368aec;}
+.s3 { color: #cacaca;}
+.s4 { color: #777777;}
+.s5 { color: #eedb85;}
+.s6 { color: #d867c6;}
+</style>
+</head>
+<body bgcolor="#212121">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+MainActivity.kt</font>
+</center></td></tr></table>
+<pre><span class="s0">package </span><span class="s1">com.example.moneytrack</span>
+
+<span class="s1">import android.os.Bundle</span>
+<span class="s1">import androidx.activity.ComponentActivity</span>
+<span class="s1">import androidx.activity.compose.setContent</span>
+<span class="s1">import androidx.activity.enableEdgeToEdge</span>
+<span class="s1">import androidx.compose.animation.core.animateFloatAsState</span>
+<span class="s1">import androidx.compose.animation.core.tween</span>
+<span class="s1">import androidx.compose.foundation.BorderStroke</span>
+<span class="s1">import androidx.compose.foundation.Canvas</span>
+<span class="s1">import androidx.compose.foundation.background</span>
+<span class="s1">import androidx.compose.foundation.clickable</span>
+<span class="s1">import androidx.compose.foundation.layout.*</span>
+<span class="s1">import androidx.compose.foundation.lazy.LazyColumn</span>
+<span class="s1">import androidx.compose.foundation.lazy.items</span>
+<span class="s1">import androidx.compose.foundation.rememberScrollState</span>
+<span class="s1">import androidx.compose.foundation.shape.CircleShape</span>
+<span class="s1">import androidx.compose.foundation.shape.RoundedCornerShape</span>
+<span class="s1">import androidx.compose.foundation.text.KeyboardOptions</span>
+<span class="s1">import androidx.compose.foundation.verticalScroll</span>
+<span class="s1">import androidx.compose.material.icons.Icons</span>
+<span class="s1">import androidx.compose.material.icons.rounded.*</span>
+<span class="s1">import androidx.compose.material3.*</span>
+<span class="s1">import androidx.compose.runtime.*</span>
+<span class="s1">import androidx.compose.ui.Alignment</span>
+<span class="s1">import androidx.compose.ui.Modifier</span>
+<span class="s1">import androidx.compose.ui.draw.clip</span>
+<span class="s1">import androidx.compose.ui.geometry.Offset</span>
+<span class="s1">import androidx.compose.ui.geometry.Size</span>
+<span class="s1">import androidx.compose.ui.graphics.Color</span>
+<span class="s1">import androidx.compose.ui.graphics.StrokeCap</span>
+<span class="s1">import androidx.compose.ui.graphics.drawscope.Stroke</span>
+<span class="s1">import androidx.compose.ui.graphics.vector.ImageVector</span>
+<span class="s1">import androidx.compose.ui.text.font.FontWeight</span>
+<span class="s1">import androidx.compose.ui.text.input.KeyboardType</span>
+<span class="s1">import androidx.compose.ui.tooling.preview.Preview</span>
+<span class="s1">import androidx.compose.ui.unit.dp</span>
+<span class="s1">import androidx.compose.ui.unit.sp</span>
+<span class="s1">import com.example.moneytrack.ui.theme.*</span>
+<span class="s1">import java.text.SimpleDateFormat</span>
+<span class="s1">import java.util.Calendar</span>
+<span class="s1">import java.util.Date</span>
+<span class="s1">import java.util.Locale</span>
+<span class="s1">import java.util.UUID</span>
+
+<span class="s0">val </span><span class="s1">WarningAmber = Color(</span><span class="s2">0xFFF39C12</span><span class="s1">)</span>
+
+<span class="s1">enum </span><span class="s0">class </span><span class="s1">TransactionType { INCOME</span><span class="s3">, </span><span class="s1">EXPENSE }</span>
+
+<span class="s1">enum </span><span class="s0">class </span><span class="s1">TransactionCategory(</span>
+    <span class="s0">val </span><span class="s1">displayName: String</span><span class="s3">,</span>
+    <span class="s0">val </span><span class="s1">type: TransactionType</span><span class="s3">,</span>
+    <span class="s0">val </span><span class="s1">icon: ImageVector</span><span class="s3">,</span>
+    <span class="s0">val </span><span class="s1">chartColor: Color</span>
+<span class="s1">) {</span>
+    <span class="s4">// Categorías de Gastos</span>
+    <span class="s1">ALIMENTACION(</span><span class="s5">&quot;Alimentación&quot;</span><span class="s3">, </span><span class="s1">TransactionType.EXPENSE</span><span class="s3">, </span><span class="s1">Icons.Rounded.Restaurant</span><span class="s3">, </span><span class="s1">Color(</span><span class="s2">0xFF2ECC71</span><span class="s1">))</span><span class="s3">,</span>
+    <span class="s1">TRANSPORTE(</span><span class="s5">&quot;Transporte&quot;</span><span class="s3">, </span><span class="s1">TransactionType.EXPENSE</span><span class="s3">, </span><span class="s1">Icons.Rounded.DirectionsBus</span><span class="s3">, </span><span class="s1">Color(</span><span class="s2">0xFF3498DB</span><span class="s1">))</span><span class="s3">,</span>
+    <span class="s1">VIVIENDA(</span><span class="s5">&quot;Vivienda&quot;</span><span class="s3">, </span><span class="s1">TransactionType.EXPENSE</span><span class="s3">, </span><span class="s1">Icons.Rounded.HomeWork</span><span class="s3">, </span><span class="s1">Color(</span><span class="s2">0xFFE67E22</span><span class="s1">))</span><span class="s3">,</span>
+    <span class="s1">OCIO(</span><span class="s5">&quot;Ocio&quot;</span><span class="s3">, </span><span class="s1">TransactionType.EXPENSE</span><span class="s3">, </span><span class="s1">Icons.Rounded.SportsEsports</span><span class="s3">, </span><span class="s1">Color(</span><span class="s2">0xFF9B59B6</span><span class="s1">))</span><span class="s3">,</span>
+    <span class="s1">COMPRAS(</span><span class="s5">&quot;Compras&quot;</span><span class="s3">, </span><span class="s1">TransactionType.EXPENSE</span><span class="s3">, </span><span class="s1">Icons.Rounded.ShoppingBag</span><span class="s3">, </span><span class="s1">Color(</span><span class="s2">0xFFE74C3C</span><span class="s1">))</span><span class="s3">,</span>
+    <span class="s1">OTROS_GASTOS(</span><span class="s5">&quot;Otros gastos&quot;</span><span class="s3">, </span><span class="s1">TransactionType.EXPENSE</span><span class="s3">, </span><span class="s1">Icons.Rounded.MoreHoriz</span><span class="s3">, </span><span class="s1">Color(</span><span class="s2">0xFF95A5A6</span><span class="s1">))</span><span class="s3">,</span>
+
+    <span class="s4">// Categorías de Ingresos</span>
+    <span class="s1">SALARIO(</span><span class="s5">&quot;Salario&quot;</span><span class="s3">, </span><span class="s1">TransactionType.INCOME</span><span class="s3">, </span><span class="s1">Icons.Rounded.Work</span><span class="s3">, </span><span class="s1">EmeraldPrimary)</span><span class="s3">,</span>
+    <span class="s1">BECAS(</span><span class="s5">&quot;Becas&quot;</span><span class="s3">, </span><span class="s1">TransactionType.INCOME</span><span class="s3">, </span><span class="s1">Icons.Rounded.School</span><span class="s3">, </span><span class="s1">Color(</span><span class="s2">0xFF1ABC9C</span><span class="s1">))</span><span class="s3">,</span>
+    <span class="s1">VENTAS(</span><span class="s5">&quot;Ventas&quot;</span><span class="s3">, </span><span class="s1">TransactionType.INCOME</span><span class="s3">, </span><span class="s1">Icons.Rounded.Storefront</span><span class="s3">, </span><span class="s1">Color(</span><span class="s2">0xFF27AE60</span><span class="s1">))</span><span class="s3">,</span>
+    <span class="s1">OTROS_INGRESOS(</span><span class="s5">&quot;Otros ingresos&quot;</span><span class="s3">, </span><span class="s1">TransactionType.INCOME</span><span class="s3">, </span><span class="s1">Icons.Rounded.Payments</span><span class="s3">, </span><span class="s1">Color(</span><span class="s2">0xFF58D68D</span><span class="s1">))</span><span class="s3">;</span>
+
+    <span class="s1">companion </span><span class="s0">object </span><span class="s1">{</span>
+        <span class="s0">fun </span><span class="s1">forType(type: TransactionType): List&lt;TransactionCategory&gt; =</span>
+            <span class="s1">entries.filter { it.type == type }</span>
+
+        <span class="s0">fun </span><span class="s1">defaultFor(type: TransactionType): TransactionCategory =</span>
+            <span class="s0">if </span><span class="s1">(type == TransactionType.INCOME) SALARIO </span><span class="s0">else </span><span class="s1">ALIMENTACION</span>
+    <span class="s1">}</span>
+<span class="s1">}</span>
+
+<span class="s1">enum </span><span class="s0">class </span><span class="s1">TransactionFilter(</span><span class="s0">val </span><span class="s1">label: String) {</span>
+    <span class="s1">ALL(</span><span class="s5">&quot;Todos&quot;</span><span class="s1">)</span><span class="s3">,</span>
+    <span class="s1">INCOME(</span><span class="s5">&quot;Ingresos&quot;</span><span class="s1">)</span><span class="s3">,</span>
+    <span class="s1">EXPENSE(</span><span class="s5">&quot;Gastos&quot;</span><span class="s1">)</span>
+<span class="s1">}</span>
+
+<span class="s1">enum </span><span class="s0">class </span><span class="s1">AppScreen { HOME</span><span class="s3">, </span><span class="s1">HISTORY</span><span class="s3">, </span><span class="s1">BUDGETS</span><span class="s3">, </span><span class="s1">STATS }</span>
+
+<span class="s1">data </span><span class="s0">class </span><span class="s1">Transaction(</span>
+    <span class="s0">val </span><span class="s1">id: String = UUID.randomUUID().toString()</span><span class="s3">,</span>
+    <span class="s0">val </span><span class="s1">name: String</span><span class="s3">,</span>
+    <span class="s0">val </span><span class="s1">amount: Double</span><span class="s3">,</span>
+    <span class="s0">val </span><span class="s1">category: TransactionCategory</span><span class="s3">,</span>
+    <span class="s0">val </span><span class="s1">dateMillis: Long</span><span class="s3">,</span>
+    <span class="s0">val </span><span class="s1">type: TransactionType</span>
+<span class="s1">)</span>
+
+<span class="s1">sealed </span><span class="s0">class </span><span class="s1">FormMode {</span>
+    <span class="s1">data </span><span class="s0">class </span><span class="s1">Create(</span><span class="s0">val </span><span class="s1">defaultType: TransactionType) : FormMode()</span>
+    <span class="s1">data </span><span class="s0">class </span><span class="s1">Edit(</span><span class="s0">val </span><span class="s1">transaction: Transaction) : FormMode()</span>
+<span class="s1">}</span>
+
+<span class="s0">class </span><span class="s1">MainActivity : ComponentActivity() {</span>
+    <span class="s1">override </span><span class="s0">fun </span><span class="s1">onCreate(savedInstanceState: Bundle?) {</span>
+        <span class="s0">super</span><span class="s1">.onCreate(savedInstanceState)</span>
+        <span class="s1">enableEdgeToEdge()</span>
+        <span class="s1">setContent {</span>
+            <span class="s1">MoneyTrackTheme {</span>
+                <span class="s1">MoneyTrackApp()</span>
+            <span class="s1">}</span>
+        <span class="s1">}</span>
+    <span class="s1">}</span>
+<span class="s1">}</span>
+
+<span class="s1">@Composable</span>
+<span class="s0">fun </span><span class="s1">MoneyTrackApp() {</span>
+    <span class="s0">val </span><span class="s1">now = System.currentTimeMillis()</span>
+    <span class="s0">val </span><span class="s1">dayMs = </span><span class="s2">86_400_000L</span>
+
+    <span class="s0">val </span><span class="s1">transactions = remember {</span>
+        <span class="s1">mutableStateListOf(</span>
+            <span class="s1">Transaction(</span>
+                <span class="s1">name = </span><span class="s5">&quot;Nómina mensual&quot;</span><span class="s3">,</span>
+                <span class="s1">amount = </span><span class="s2">1950.00</span><span class="s3">,</span>
+                <span class="s1">category = TransactionCategory.SALARIO</span><span class="s3">,</span>
+                <span class="s1">dateMillis = now - (dayMs * </span><span class="s2">4</span><span class="s1">)</span><span class="s3">,</span>
+                <span class="s1">type = TransactionType.INCOME</span>
+            <span class="s1">)</span><span class="s3">,</span>
+            <span class="s1">Transaction(</span>
+                <span class="s1">name = </span><span class="s5">&quot;Alquiler piso&quot;</span><span class="s3">,</span>
+                <span class="s1">amount = </span><span class="s2">650.00</span><span class="s3">,</span>
+                <span class="s1">category = TransactionCategory.VIVIENDA</span><span class="s3">,</span>
+                <span class="s1">dateMillis = now - (dayMs * </span><span class="s2">3</span><span class="s1">)</span><span class="s3">,</span>
+                <span class="s1">type = TransactionType.EXPENSE</span>
+            <span class="s1">)</span><span class="s3">,</span>
+            <span class="s1">Transaction(</span>
+                <span class="s1">name = </span><span class="s5">&quot;Compra semanal&quot;</span><span class="s3">,</span>
+                <span class="s1">amount = </span><span class="s2">145.40</span><span class="s3">,</span>
+                <span class="s1">category = TransactionCategory.ALIMENTACION</span><span class="s3">,</span>
+                <span class="s1">dateMillis = now - (dayMs * </span><span class="s2">2</span><span class="s1">)</span><span class="s3">,</span>
+                <span class="s1">type = TransactionType.EXPENSE</span>
+            <span class="s1">)</span><span class="s3">,</span>
+            <span class="s1">Transaction(</span>
+                <span class="s1">name = </span><span class="s5">&quot;Venta portátil antiguo&quot;</span><span class="s3">,</span>
+                <span class="s1">amount = </span><span class="s2">240.00</span><span class="s3">,</span>
+                <span class="s1">category = TransactionCategory.VENTAS</span><span class="s3">,</span>
+                <span class="s1">dateMillis = now - dayMs</span><span class="s3">,</span>
+                <span class="s1">type = TransactionType.INCOME</span>
+            <span class="s1">)</span><span class="s3">,</span>
+            <span class="s1">Transaction(</span>
+                <span class="s1">name = </span><span class="s5">&quot;Cine y cena&quot;</span><span class="s3">,</span>
+                <span class="s1">amount = </span><span class="s2">52.00</span><span class="s3">,</span>
+                <span class="s1">category = TransactionCategory.OCIO</span><span class="s3">,</span>
+                <span class="s1">dateMillis = now</span><span class="s3">,</span>
+                <span class="s1">type = TransactionType.EXPENSE</span>
+            <span class="s1">)</span><span class="s3">,</span>
+            <span class="s1">Transaction(</span>
+                <span class="s1">name = </span><span class="s5">&quot;Abono transporte&quot;</span><span class="s3">,</span>
+                <span class="s1">amount = </span><span class="s2">30.00</span><span class="s3">,</span>
+                <span class="s1">category = TransactionCategory.TRANSPORTE</span><span class="s3">,</span>
+                <span class="s1">dateMillis = now</span><span class="s3">,</span>
+                <span class="s1">type = TransactionType.EXPENSE</span>
+            <span class="s1">)</span>
+        <span class="s1">)</span>
+    <span class="s1">}</span>
+
+    <span class="s0">var </span><span class="s1">monthlyBudgetLimit by remember { mutableDoubleStateOf(</span><span class="s2">1200.00</span><span class="s1">) }</span>
+    <span class="s0">val </span><span class="s1">categoryBudgets = remember {</span>
+        <span class="s1">mutableStateMapOf(</span>
+            <span class="s1">TransactionCategory.ALIMENTACION to </span><span class="s2">300.00</span><span class="s3">,</span>
+            <span class="s1">TransactionCategory.OCIO to </span><span class="s2">120.00</span><span class="s3">,</span>
+            <span class="s1">TransactionCategory.TRANSPORTE to </span><span class="s2">80.00</span>
+        <span class="s1">)</span>
+    <span class="s1">}</span>
+
+    <span class="s0">var </span><span class="s1">currentScreen by remember { mutableStateOf(AppScreen.HOME) }</span>
+    <span class="s0">var </span><span class="s1">formMode by remember { mutableStateOf&lt;FormMode?&gt;(</span><span class="s0">null</span><span class="s1">) }</span>
+
+    <span class="s1">Scaffold(</span>
+        <span class="s1">containerColor = MaterialTheme.colorScheme.background</span><span class="s3">,</span>
+        <span class="s1">bottomBar = {</span>
+            <span class="s1">NavigationBar(</span>
+                <span class="s1">containerColor = MaterialTheme.colorScheme.surface</span><span class="s3">,</span>
+                <span class="s1">tonalElevation = </span><span class="s2">0</span><span class="s1">.dp</span>
+            <span class="s1">) {</span>
+                <span class="s1">NavigationBarItem(</span>
+                    <span class="s1">selected = currentScreen == AppScreen.HOME</span><span class="s3">,</span>
+                    <span class="s1">onClick = { currentScreen = AppScreen.HOME }</span><span class="s3">,</span>
+                    <span class="s1">icon = { Icon(Icons.Rounded.Home</span><span class="s3">, </span><span class="s1">contentDescription = </span><span class="s5">&quot;Inicio&quot;</span><span class="s1">) }</span><span class="s3">,</span>
+                    <span class="s1">label = { Text(</span><span class="s5">&quot;Inicio&quot;</span><span class="s3">, </span><span class="s1">fontSize = </span><span class="s2">11</span><span class="s1">.sp</span><span class="s3">, </span><span class="s1">fontWeight = FontWeight.Medium) }</span><span class="s3">,</span>
+                    <span class="s1">colors = navItemColors()</span>
+                <span class="s1">)</span>
+                <span class="s1">NavigationBarItem(</span>
+                    <span class="s1">selected = currentScreen == AppScreen.HISTORY</span><span class="s3">,</span>
+                    <span class="s1">onClick = { currentScreen = AppScreen.HISTORY }</span><span class="s3">,</span>
+                    <span class="s1">icon = { Icon(Icons.Rounded.ReceiptLong</span><span class="s3">, </span><span class="s1">contentDescription = </span><span class="s5">&quot;Movimientos&quot;</span><span class="s1">) }</span><span class="s3">,</span>
+                    <span class="s1">label = { Text(</span><span class="s5">&quot;Movimientos&quot;</span><span class="s3">, </span><span class="s1">fontSize = </span><span class="s2">11</span><span class="s1">.sp</span><span class="s3">, </span><span class="s1">fontWeight = FontWeight.Medium) }</span><span class="s3">,</span>
+                    <span class="s1">colors = navItemColors()</span>
+                <span class="s1">)</span>
+                <span class="s1">NavigationBarItem(</span>
+                    <span class="s1">selected = currentScreen == AppScreen.BUDGETS</span><span class="s3">,</span>
+                    <span class="s1">onClick = { currentScreen = AppScreen.BUDGETS }</span><span class="s3">,</span>
+                    <span class="s1">icon = { Icon(Icons.Rounded.AccountBalanceWallet</span><span class="s3">, </span><span class="s1">contentDescription = </span><span class="s5">&quot;Presupuesto&quot;</span><span class="s1">) }</span><span class="s3">,</span>
+                    <span class="s1">label = { Text(</span><span class="s5">&quot;Presupuesto&quot;</span><span class="s3">, </span><span class="s1">fontSize = </span><span class="s2">11</span><span class="s1">.sp</span><span class="s3">, </span><span class="s1">fontWeight = FontWeight.Medium) }</span><span class="s3">,</span>
+                    <span class="s1">colors = navItemColors()</span>
+                <span class="s1">)</span>
+                <span class="s1">NavigationBarItem(</span>
+                    <span class="s1">selected = currentScreen == AppScreen.STATS</span><span class="s3">,</span>
+                    <span class="s1">onClick = { currentScreen = AppScreen.STATS }</span><span class="s3">,</span>
+                    <span class="s1">icon = { Icon(Icons.Rounded.PieChart</span><span class="s3">, </span><span class="s1">contentDescription = </span><span class="s5">&quot;Estadísticas&quot;</span><span class="s1">) }</span><span class="s3">,</span>
+                    <span class="s1">label = { Text(</span><span class="s5">&quot;Estadísticas&quot;</span><span class="s3">, </span><span class="s1">fontSize = </span><span class="s2">11</span><span class="s1">.sp</span><span class="s3">, </span><span class="s1">fontWeight = FontWeight.Medium) }</span><span class="s3">,</span>
+                    <span class="s1">colors = navItemColors()</span>
+                <span class="s1">)</span>
+            <span class="s1">}</span>
+        <span class="s1">}</span>
+    <span class="s1">) { innerPadding -&gt;</span>
+        <span class="s1">Box(modifier = Modifier.padding(innerPadding)) {</span>
+            <span class="s0">when </span><span class="s1">(currentScreen) {</span>
+                <span class="s1">AppScreen.HOME -&gt; MoneyTrackHomeScreen(</span>
+                    <span class="s1">transactions = transactions</span><span class="s3">,</span>
+                    <span class="s1">onOpenForm = { formMode = it }</span><span class="s3">,</span>
+                    <span class="s1">onDeleteTransaction = { transactions.remove(it) }</span><span class="s3">,</span>
+                    <span class="s1">onSeeAllClick = { currentScreen = AppScreen.HISTORY }</span>
+                <span class="s1">)</span>
+                <span class="s1">AppScreen.HISTORY -&gt; AllTransactionsScreen(</span>
+                    <span class="s1">transactions = transactions</span><span class="s3">,</span>
+                    <span class="s1">onOpenForm = { formMode = it }</span><span class="s3">,</span>
+                    <span class="s1">onDeleteTransaction = { transactions.remove(it) }</span>
+                <span class="s1">)</span>
+                <span class="s1">AppScreen.BUDGETS -&gt; BudgetsScreen(</span>
+                    <span class="s1">transactions = transactions</span><span class="s3">,</span>
+                    <span class="s1">monthlyBudgetLimit = monthlyBudgetLimit</span><span class="s3">,</span>
+                    <span class="s1">onUpdateMonthlyLimit = { monthlyBudgetLimit = it }</span><span class="s3">,</span>
+                    <span class="s1">categoryBudgets = categoryBudgets</span><span class="s3">,</span>
+                    <span class="s1">onSaveCategoryBudget = { category</span><span class="s3">, </span><span class="s1">limit -&gt;</span>
+                        <span class="s1">categoryBudgets[category] = limit</span>
+                    <span class="s1">}</span><span class="s3">,</span>
+                    <span class="s1">onRemoveCategoryBudget = { category -&gt;</span>
+                        <span class="s1">categoryBudgets.remove(category)</span>
+                    <span class="s1">}</span>
+                <span class="s1">)</span>
+                <span class="s1">AppScreen.STATS -&gt; StatisticsScreen(</span>
+                    <span class="s1">transactions = transactions</span>
+                <span class="s1">)</span>
+            <span class="s1">}</span>
+        <span class="s1">}</span>
+
+        <span class="s1">formMode?.let { mode -&gt;</span>
+            <span class="s1">TransactionFormDialog(</span>
+                <span class="s1">mode = mode</span><span class="s3">,</span>
+                <span class="s1">onDismiss = { formMode = </span><span class="s0">null </span><span class="s1">}</span><span class="s3">,</span>
+                <span class="s1">onSave = { savedTransaction -&gt;</span>
+                    <span class="s0">when </span><span class="s1">(mode) {</span>
+                        <span class="s0">is </span><span class="s1">FormMode.Create -&gt; transactions.add(</span><span class="s2">0</span><span class="s3">, </span><span class="s1">savedTransaction)</span>
+                        <span class="s0">is </span><span class="s1">FormMode.Edit -&gt; {</span>
+                            <span class="s0">val </span><span class="s1">index = transactions.indexOfFirst { it.id == savedTransaction.id }</span>
+                            <span class="s0">if </span><span class="s1">(index != -</span><span class="s2">1</span><span class="s1">) transactions[index] = savedTransaction</span>
+                        <span class="s1">}</span>
+                    <span class="s1">}</span>
+                    <span class="s1">formMode = </span><span class="s0">null</span>
+                <span class="s1">}</span>
+            <span class="s1">)</span>
+        <span class="s1">}</span>
+    <span class="s1">}</span>
+<span class="s1">}</span>
+
+<span class="s1">@Composable</span>
+<span class="s1">private </span><span class="s0">fun </span><span class="s1">navItemColors() = NavigationBarItemDefaults.colors(</span>
+    <span class="s1">selectedIconColor = DarkBackground</span><span class="s3">,</span>
+    <span class="s1">selectedTextColor = EmeraldPrimary</span><span class="s3">,</span>
+    <span class="s1">indicatorColor = EmeraldPrimary</span><span class="s3">,</span>
+    <span class="s1">unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant</span><span class="s3">,</span>
+    <span class="s1">unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant</span>
+<span class="s1">)</span>
+
+<span class="s4">// ==========================================</span>
+<span class="s4">// PANTALLA 1: INICIO (RESUMEN PRINCIPAL)</span>
+<span class="s4">// ==========================================</span>
+<span class="s1">@OptIn(ExperimentalMaterial3Api::</span><span class="s0">class</span><span class="s1">)</span>
+<span class="s1">@Composable</span>
+<span class="s0">fun </span><span class="s1">MoneyTrackHomeScreen(</span>
+    <span class="s1">transactions: List&lt;Transaction&gt;</span><span class="s3">,</span>
+    <span class="s1">onOpenForm: (FormMode) -&gt; Unit</span><span class="s3">,</span>
+    <span class="s1">onDeleteTransaction: (Transaction) -&gt; Unit</span><span class="s3">,</span>
+    <span class="s1">onSeeAllClick: () -&gt; Unit</span>
+<span class="s1">) {</span>
+    <span class="s0">val </span><span class="s1">totalIncome = transactions.filter { it.type == TransactionType.INCOME }.sumOf { it.amount }</span>
+    <span class="s0">val </span><span class="s1">totalExpense = transactions.filter { it.type == TransactionType.EXPENSE }.sumOf { it.amount }</span>
+    <span class="s0">val </span><span class="s1">availableBalance = totalIncome - totalExpense</span>
+
+    <span class="s1">Column(</span>
+        <span class="s1">modifier = Modifier</span>
+            <span class="s1">.fillMaxSize()</span>
+            <span class="s1">.padding(horizontal = </span><span class="s2">16</span><span class="s1">.dp)</span>
+    <span class="s1">) {</span>
+        <span class="s1">TopAppBar(</span>
+            <span class="s1">title = {</span>
+                <span class="s1">Column {</span>
+                    <span class="s1">Text(</span>
+                        <span class="s1">text = </span><span class="s5">&quot;MoneyTrack&quot;</span><span class="s3">,</span>
+                        <span class="s1">fontWeight = FontWeight.Bold</span><span class="s3">,</span>
+                        <span class="s1">fontSize = </span><span class="s2">22</span><span class="s1">.sp</span><span class="s3">,</span>
+                        <span class="s1">color = MaterialTheme.colorScheme.onBackground</span>
+                    <span class="s1">)</span>
+                    <span class="s1">Text(</span>
+                        <span class="s1">text = </span><span class="s5">&quot;Control de finanzas personales&quot;</span><span class="s3">,</span>
+                        <span class="s1">fontSize = </span><span class="s2">12</span><span class="s1">.sp</span><span class="s3">,</span>
+                        <span class="s1">color = MaterialTheme.colorScheme.onSurfaceVariant</span>
+                    <span class="s1">)</span>
+                <span class="s1">}</span>
+            <span class="s1">}</span><span class="s3">,</span>
+            <span class="s1">colors = TopAppBarDefaults.topAppBarColors(</span>
+                <span class="s1">containerColor = MaterialTheme.colorScheme.background</span>
+            <span class="s1">)</span>
+        <span class="s1">)</span>
+
+        <span class="s1">MainBalanceCard(</span>
+            <span class="s1">availableBalance = availableBalance</span><span class="s3">,</span>
+            <span class="s1">totalIncome = totalIncome</span><span class="s3">,</span>
+            <span class="s1">totalExpense = totalExpense</span>
+        <span class="s1">)</span>
+
+        <span class="s1">Spacer(modifier = Modifier.height(</span><span class="s2">16</span><span class="s1">.dp))</span>
+
+        <span class="s1">QuickActionButtons(</span>
+            <span class="s1">onAddIncomeClick = { onOpenForm(FormMode.Create(TransactionType.INCOME)) }</span><span class="s3">,</span>
+            <span class="s1">onAddExpenseClick = { onOpenForm(FormMode.Create(TransactionType.EXPENSE)) }</span>
+        <span class="s1">)</span>
+
+        <span class="s1">Spacer(modifier = Modifier.height(</span><span class="s2">24</span><span class="s1">.dp))</span>
+
+        <span class="s1">Row(</span>
+            <span class="s1">modifier = Modifier.fillMaxWidth()</span><span class="s3">,</span>
+            <span class="s1">horizontalArrangement = Arrangement.SpaceBetween</span><span class="s3">,</span>
+            <span class="s1">verticalAlignment = Alignment.CenterVertically</span>
+        <span class="s1">) {</span>
+            <span class="s1">Text(</span>
+                <span class="s1">text = </span><span class="s5">&quot;Últimos movimientos&quot;</span><span class="s3">,</span>
+                <span class="s1">style = MaterialTheme.typography.titleMedium</span><span class="s3">,</span>
+                <span class="s1">fontWeight = FontWeight.SemiBold</span><span class="s3">,</span>
+                <span class="s1">color = MaterialTheme.colorScheme.onBackground</span>
+            <span class="s1">)</span>
+            <span class="s1">TextButton(onClick = onSeeAllClick) {</span>
+                <span class="s1">Text(</span>
+                    <span class="s1">text = </span><span class="s5">&quot;Ver todos&quot;</span><span class="s3">,</span>
+                    <span class="s1">color = EmeraldPrimary</span><span class="s3">,</span>
+                    <span class="s1">fontWeight = FontWeight.SemiBold</span><span class="s3">,</span>
+                    <span class="s1">fontSize = </span><span class="s2">13</span><span class="s1">.sp</span>
+                <span class="s1">)</span>
+            <span class="s1">}</span>
+        <span class="s1">}</span>
+
+        <span class="s1">Spacer(modifier = Modifier.height(</span><span class="s2">6</span><span class="s1">.dp))</span>
+
+        <span class="s0">val </span><span class="s1">recentList = transactions.sortedByDescending { it.dateMillis }.take(</span><span class="s2">5</span><span class="s1">)</span>
+
+        <span class="s0">if </span><span class="s1">(recentList.isEmpty()) {</span>
+            <span class="s1">EmptyTransactionsCard(</span><span class="s5">&quot;Aún no tienes movimientos registrados&quot;</span><span class="s1">)</span>
+        <span class="s1">} </span><span class="s0">else </span><span class="s1">{</span>
+            <span class="s1">LazyColumn(</span>
+                <span class="s1">verticalArrangement = Arrangement.spacedBy(</span><span class="s2">10</span><span class="s1">.dp)</span><span class="s3">,</span>
+                <span class="s1">contentPadding = PaddingValues(bottom = </span><span class="s2">16</span><span class="s1">.dp)</span>
+            <span class="s1">) {</span>
+                <span class="s1">items(recentList</span><span class="s3">, </span><span class="s1">key = { it.id }) { item -&gt;</span>
+                    <span class="s1">MovementItemCard(</span>
+                        <span class="s1">transaction = item</span><span class="s3">,</span>
+                        <span class="s1">onEdit = { onOpenForm(FormMode.Edit(item)) }</span><span class="s3">,</span>
+                        <span class="s1">onDelete = { onDeleteTransaction(item) }</span>
+                    <span class="s1">)</span>
+                <span class="s1">}</span>
+            <span class="s1">}</span>
+        <span class="s1">}</span>
+    <span class="s1">}</span>
+<span class="s1">}</span>
+
+<span class="s4">// ==========================================</span>
+<span class="s4">// PANTALLA 2: TODOS LOS MOVIMIENTOS + FILTROS</span>
+<span class="s4">// ==========================================</span>
+<span class="s1">@OptIn(ExperimentalMaterial3Api::</span><span class="s0">class</span><span class="s1">)</span>
+<span class="s1">@Composable</span>
+<span class="s0">fun </span><span class="s1">AllTransactionsScreen(</span>
+    <span class="s1">transactions: List&lt;Transaction&gt;</span><span class="s3">,</span>
+    <span class="s1">onOpenForm: (FormMode) -&gt; Unit</span><span class="s3">,</span>
+    <span class="s1">onDeleteTransaction: (Transaction) -&gt; Unit</span>
+<span class="s1">) {</span>
+    <span class="s0">var </span><span class="s1">selectedFilter by remember { mutableStateOf(TransactionFilter.ALL) }</span>
+
+    <span class="s0">val </span><span class="s1">filteredTransactions = remember(transactions.toList()</span><span class="s3">, </span><span class="s1">selectedFilter) {</span>
+        <span class="s1">transactions</span>
+            <span class="s1">.filter { tx -&gt;</span>
+                <span class="s0">when </span><span class="s1">(selectedFilter) {</span>
+                    <span class="s1">TransactionFilter.ALL -&gt; </span><span class="s0">true</span>
+                    <span class="s1">TransactionFilter.INCOME -&gt; tx.type == TransactionType.INCOME</span>
+                    <span class="s1">TransactionFilter.EXPENSE -&gt; tx.type == TransactionType.EXPENSE</span>
+                <span class="s1">}</span>
+            <span class="s1">}</span>
+            <span class="s1">.sortedByDescending { it.dateMillis }</span>
+    <span class="s1">}</span>
+
+    <span class="s0">val </span><span class="s1">filteredTotal = remember(filteredTransactions</span><span class="s3">, </span><span class="s1">selectedFilter) {</span>
+        <span class="s0">when </span><span class="s1">(selectedFilter) {</span>
+            <span class="s1">TransactionFilter.ALL -&gt; {</span>
+                <span class="s0">val </span><span class="s1">inc = filteredTransactions.filter { it.type == TransactionType.INCOME }.sumOf { it.amount }</span>
+                <span class="s0">val </span><span class="s1">exp = filteredTransactions.filter { it.type == TransactionType.EXPENSE }.sumOf { it.amount }</span>
+                <span class="s1">inc - exp</span>
+            <span class="s1">}</span>
+            <span class="s1">TransactionFilter.INCOME -&gt; filteredTransactions.sumOf { it.amount }</span>
+            <span class="s1">TransactionFilter.EXPENSE -&gt; filteredTransactions.sumOf { it.amount }</span>
+        <span class="s1">}</span>
+    <span class="s1">}</span>
+
+    <span class="s1">Column(</span>
+        <span class="s1">modifier = Modifier</span>
+            <span class="s1">.fillMaxSize()</span>
+            <span class="s1">.padding(horizontal = </span><span class="s2">16</span><span class="s1">.dp)</span>
+    <span class="s1">) {</span>
+        <span class="s1">TopAppBar(</span>
+            <span class="s1">title = {</span>
+                <span class="s1">Column {</span>
+                    <span class="s1">Text(</span>
+                        <span class="s1">text = </span><span class="s5">&quot;Todos los movimientos&quot;</span><span class="s3">,</span>
+                        <span class="s1">fontWeight = FontWeight.Bold</span><span class="s3">,</span>
+                        <span class="s1">fontSize = </span><span class="s2">22</span><span class="s1">.sp</span><span class="s3">,</span>
+                        <span class="s1">color = MaterialTheme.colorScheme.onBackground</span>
+                    <span class="s1">)</span>
+                    <span class="s1">Text(</span>
+                        <span class="s1">text = </span><span class="s5">&quot;Consulta y filtra tus ingresos y gastos&quot;</span><span class="s3">,</span>
+                        <span class="s1">fontSize = </span><span class="s2">12</span><span class="s1">.sp</span><span class="s3">,</span>
+                        <span class="s1">color = MaterialTheme.colorScheme.onSurfaceVariant</span>
+                    <span class="s1">)</span>
+                <span class="s1">}</span>
+            <span class="s1">}</span><span class="s3">,</span>
+            <span class="s1">colors = TopAppBarDefaults.topAppBarColors(</span>
+                <span class="s1">containerColor = MaterialTheme.colorScheme.background</span>
+            <span class="s1">)</span>
+        <span class="s1">)</span>
+
+        <span class="s1">Row(</span>
+            <span class="s1">modifier = Modifier.fillMaxWidth()</span><span class="s3">,</span>
+            <span class="s1">horizontalArrangement = Arrangement.spacedBy(</span><span class="s2">8</span><span class="s1">.dp)</span>
+        <span class="s1">) {</span>
+            <span class="s1">TransactionFilter.entries.forEach { filter -&gt;</span>
+                <span class="s0">val </span><span class="s1">isSelected = selectedFilter == filter</span>
+                <span class="s0">val </span><span class="s1">chipAccent = </span><span class="s0">when </span><span class="s1">(filter) {</span>
+                    <span class="s1">TransactionFilter.ALL -&gt; EmeraldPrimary</span>
+                    <span class="s1">TransactionFilter.INCOME -&gt; EmeraldPrimary</span>
+                    <span class="s1">TransactionFilter.EXPENSE -&gt; ExpenseRed</span>
+                <span class="s1">}</span>
+
+                <span class="s1">FilterChip(</span>
+                    <span class="s1">selected = isSelected</span><span class="s3">,</span>
+                    <span class="s1">onClick = { selectedFilter = filter }</span><span class="s3">,</span>
+                    <span class="s1">label = {</span>
+                        <span class="s1">Box(</span>
+                            <span class="s1">modifier = Modifier.fillMaxWidth()</span><span class="s3">,</span>
+                            <span class="s1">contentAlignment = Alignment.Center</span>
+                        <span class="s1">) {</span>
+                            <span class="s1">Text(</span>
+                                <span class="s1">text = filter.label</span><span class="s3">,</span>
+                                <span class="s1">fontWeight = </span><span class="s0">if </span><span class="s1">(isSelected) FontWeight.Bold </span><span class="s0">else </span><span class="s1">FontWeight.Medium</span><span class="s3">,</span>
+                                <span class="s1">fontSize = </span><span class="s2">13</span><span class="s1">.sp</span>
+                            <span class="s1">)</span>
+                        <span class="s1">}</span>
+                    <span class="s1">}</span><span class="s3">,</span>
+                    <span class="s1">shape = RoundedCornerShape(</span><span class="s2">14</span><span class="s1">.dp)</span><span class="s3">,</span>
+                    <span class="s1">colors = FilterChipDefaults.filterChipColors(</span>
+                        <span class="s1">containerColor = MaterialTheme.colorScheme.surface</span><span class="s3">,</span>
+                        <span class="s1">labelColor = MaterialTheme.colorScheme.onSurfaceVariant</span><span class="s3">,</span>
+                        <span class="s1">selectedContainerColor = chipAccent.copy(alpha = </span><span class="s2">0.2f</span><span class="s1">)</span><span class="s3">,</span>
+                        <span class="s1">selectedLabelColor = chipAccent</span>
+                    <span class="s1">)</span><span class="s3">,</span>
+                    <span class="s1">border = FilterChipDefaults.filterChipBorder(</span>
+                        <span class="s1">enabled = </span><span class="s0">true</span><span class="s3">,</span>
+                        <span class="s1">selected = isSelected</span><span class="s3">,</span>
+                        <span class="s1">borderColor = MaterialTheme.colorScheme.surfaceVariant</span><span class="s3">,</span>
+                        <span class="s1">selectedBorderColor = chipAccent.copy(alpha = </span><span class="s2">0.6f</span><span class="s1">)</span>
+                    <span class="s1">)</span><span class="s3">,</span>
+                    <span class="s1">modifier = Modifier.weight(</span><span class="s2">1f</span><span class="s1">)</span>
+                <span class="s1">)</span>
+            <span class="s1">}</span>
+        <span class="s1">}</span>
+
+        <span class="s1">Spacer(modifier = Modifier.height(</span><span class="s2">12</span><span class="s1">.dp))</span>
+
+        <span class="s1">Card(</span>
+            <span class="s1">modifier = Modifier.fillMaxWidth()</span><span class="s3">,</span>
+            <span class="s1">shape = RoundedCornerShape(</span><span class="s2">18</span><span class="s1">.dp)</span><span class="s3">,</span>
+            <span class="s1">colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)</span>
+        <span class="s1">) {</span>
+            <span class="s1">Row(</span>
+                <span class="s1">modifier = Modifier</span>
+                    <span class="s1">.fillMaxWidth()</span>
+                    <span class="s1">.padding(horizontal = </span><span class="s2">16</span><span class="s1">.dp</span><span class="s3">, </span><span class="s1">vertical = </span><span class="s2">14</span><span class="s1">.dp)</span><span class="s3">,</span>
+                <span class="s1">horizontalArrangement = Arrangement.SpaceBetween</span><span class="s3">,</span>
+                <span class="s1">verticalAlignment = Alignment.CenterVertically</span>
+            <span class="s1">) {</span>
+                <span class="s1">Column {</span>
+                    <span class="s1">Text(</span>
+                        <span class="s1">text = </span><span class="s0">when </span><span class="s1">(selectedFilter) {</span>
+                            <span class="s1">TransactionFilter.ALL -&gt; </span><span class="s5">&quot;Balance neto (</span><span class="s6">${</span><span class="s1">filteredTransactions.size</span><span class="s6">}</span><span class="s5">)&quot;</span>
+                            <span class="s1">TransactionFilter.INCOME -&gt; </span><span class="s5">&quot;Total ingresos (</span><span class="s6">${</span><span class="s1">filteredTransactions.size</span><span class="s6">}</span><span class="s5">)&quot;</span>
+                            <span class="s1">TransactionFilter.EXPENSE -&gt; </span><span class="s5">&quot;Total gastos (</span><span class="s6">${</span><span class="s1">filteredTransactions.size</span><span class="s6">}</span><span class="s5">)&quot;</span>
+                        <span class="s1">}</span><span class="s3">,</span>
+                        <span class="s1">fontSize = </span><span class="s2">12</span><span class="s1">.sp</span><span class="s3">,</span>
+                        <span class="s1">color = MaterialTheme.colorScheme.onSurfaceVariant</span>
+                    <span class="s1">)</span>
+                    <span class="s1">Spacer(modifier = Modifier.height(</span><span class="s2">2</span><span class="s1">.dp))</span>
+                    <span class="s0">val </span><span class="s1">amountColor = </span><span class="s0">when </span><span class="s1">(selectedFilter) {</span>
+                        <span class="s1">TransactionFilter.ALL -&gt; </span><span class="s0">if </span><span class="s1">(filteredTotal &gt;= </span><span class="s2">0</span><span class="s1">) EmeraldPrimary </span><span class="s0">else </span><span class="s1">ExpenseRed</span>
+                        <span class="s1">TransactionFilter.INCOME -&gt; EmeraldPrimary</span>
+                        <span class="s1">TransactionFilter.EXPENSE -&gt; ExpenseRed</span>
+                    <span class="s1">}</span>
+                    <span class="s0">val </span><span class="s1">prefix = </span><span class="s0">when </span><span class="s1">(selectedFilter) {</span>
+                        <span class="s1">TransactionFilter.INCOME -&gt; </span><span class="s5">&quot;+&quot;</span>
+                        <span class="s1">TransactionFilter.EXPENSE -&gt; </span><span class="s5">&quot;-&quot;</span>
+                        <span class="s1">TransactionFilter.ALL -&gt; </span><span class="s5">&quot;&quot;</span>
+                    <span class="s1">}</span>
+                    <span class="s1">Text(</span>
+                        <span class="s1">text = </span><span class="s5">&quot;</span><span class="s6">$</span><span class="s1">prefix</span><span class="s6">${</span><span class="s1">formatCurrency(filteredTotal)</span><span class="s6">}</span><span class="s5">&quot;</span><span class="s3">,</span>
+                        <span class="s1">fontSize = </span><span class="s2">20</span><span class="s1">.sp</span><span class="s3">,</span>
+                        <span class="s1">fontWeight = FontWeight.Bold</span><span class="s3">,</span>
+                        <span class="s1">color = amountColor</span>
+                    <span class="s1">)</span>
+                <span class="s1">}</span>
+
+                <span class="s1">Icon(</span>
+                    <span class="s1">imageVector = Icons.Rounded.FilterList</span><span class="s3">,</span>
+                    <span class="s1">contentDescription = </span><span class="s0">null</span><span class="s3">,</span>
+                    <span class="s1">tint = MaterialTheme.colorScheme.onSurfaceVariant</span>
+                <span class="s1">)</span>
+            <span class="s1">}</span>
+        <span class="s1">}</span>
+
+        <span class="s1">Spacer(modifier = Modifier.height(</span><span class="s2">14</span><span class="s1">.dp))</span>
+
+        <span class="s0">if </span><span class="s1">(filteredTransactions.isEmpty()) {</span>
+            <span class="s0">val </span><span class="s1">emptyMessage = </span><span class="s0">when </span><span class="s1">(selectedFilter) {</span>
+                <span class="s1">TransactionFilter.ALL -&gt; </span><span class="s5">&quot;No hay movimientos registrados&quot;</span>
+                <span class="s1">TransactionFilter.INCOME -&gt; </span><span class="s5">&quot;No hay ingresos registrados&quot;</span>
+                <span class="s1">TransactionFilter.EXPENSE -&gt; </span><span class="s5">&quot;No hay gastos registrados&quot;</span>
+            <span class="s1">}</span>
+            <span class="s1">EmptyTransactionsCard(emptyMessage)</span>
+        <span class="s1">} </span><span class="s0">else </span><span class="s1">{</span>
+            <span class="s1">LazyColumn(</span>
+                <span class="s1">verticalArrangement = Arrangement.spacedBy(</span><span class="s2">10</span><span class="s1">.dp)</span><span class="s3">,</span>
+                <span class="s1">contentPadding = PaddingValues(bottom = </span><span class="s2">16</span><span class="s1">.dp)</span>
+            <span class="s1">) {</span>
+                <span class="s1">items(filteredTransactions</span><span class="s3">, </span><span class="s1">key = { it.id }) { item -&gt;</span>
+                    <span class="s1">MovementItemCard(</span>
+                        <span class="s1">transaction = item</span><span class="s3">,</span>
+                        <span class="s1">onEdit = { onOpenForm(FormMode.Edit(item)) }</span><span class="s3">,</span>
+                        <span class="s1">onDelete = { onDeleteTransaction(item) }</span>
+                    <span class="s1">)</span>
+                <span class="s1">}</span>
+            <span class="s1">}</span>
+        <span class="s1">}</span>
+    <span class="s1">}</span>
+<span class="s1">}</span>
+
+<span class="s4">// ==========================================</span>
+<span class="s4">// PANTALLA 3: PRESUPUESTOS MENSUALES</span>
+<span class="s4">// ==========================================</span>
+<span class="s1">@OptIn(ExperimentalMaterial3Api::</span><span class="s0">class</span><span class="s1">)</span>
+<span class="s1">@Composable</span>
+<span class="s0">fun </span><span class="s1">BudgetsScreen(</span>
+    <span class="s1">transactions: List&lt;Transaction&gt;</span><span class="s3">,</span>
+    <span class="s1">monthlyBudgetLimit: Double</span><span class="s3">,</span>
+    <span class="s1">onUpdateMonthlyLimit: (Double) -&gt; Unit</span><span class="s3">,</span>
+    <span class="s1">categoryBudgets: Map&lt;TransactionCategory</span><span class="s3">, </span><span class="s1">Double&gt;</span><span class="s3">,</span>
+    <span class="s1">onSaveCategoryBudget: (TransactionCategory</span><span class="s3">, </span><span class="s1">Double) -&gt; Unit</span><span class="s3">,</span>
+    <span class="s1">onRemoveCategoryBudget: (TransactionCategory) -&gt; Unit</span>
+<span class="s1">) {</span>
+    <span class="s0">var </span><span class="s1">showEditMonthlyDialog by remember { mutableStateOf(</span><span class="s0">false</span><span class="s1">) }</span>
+    <span class="s0">var </span><span class="s1">editingCategoryBudget by remember { mutableStateOf&lt;Pair&lt;TransactionCategory</span><span class="s3">, </span><span class="s1">Double?&gt;?&gt;(</span><span class="s0">null</span><span class="s1">) }</span>
+
+    <span class="s0">val </span><span class="s1">currentMonthExpenses = remember(transactions.toList()) {</span>
+        <span class="s1">transactions.filter { it.type == TransactionType.EXPENSE &amp;&amp; isCurrentMonth(it.dateMillis) }</span>
+    <span class="s1">}</span>
+
+    <span class="s0">val </span><span class="s1">totalMonthlySpent = remember(currentMonthExpenses) {</span>
+        <span class="s1">currentMonthExpenses.sumOf { it.amount }</span>
+    <span class="s1">}</span>
+
+    <span class="s0">val </span><span class="s1">spentByCategory = remember(currentMonthExpenses) {</span>
+        <span class="s1">currentMonthExpenses</span>
+            <span class="s1">.groupBy { it.category }</span>
+            <span class="s1">.mapValues { entry -&gt; entry.value.sumOf { it.amount } }</span>
+    <span class="s1">}</span>
+
+    <span class="s0">val </span><span class="s1">currentMonthName = remember {</span>
+        <span class="s1">SimpleDateFormat(</span><span class="s5">&quot;MMMM yyyy&quot;</span><span class="s3">, </span><span class="s1">Locale.forLanguageTag(</span><span class="s5">&quot;es-ES&quot;</span><span class="s1">))</span>
+            <span class="s1">.format(Date())</span>
+            <span class="s1">.replaceFirstChar { it.uppercase() }</span>
+    <span class="s1">}</span>
+
+    <span class="s1">Column(</span>
+        <span class="s1">modifier = Modifier</span>
+            <span class="s1">.fillMaxSize()</span>
+            <span class="s1">.padding(horizontal = </span><span class="s2">16</span><span class="s1">.dp)</span>
+            <span class="s1">.verticalScroll(rememberScrollState())</span>
+    <span class="s1">) {</span>
+        <span class="s1">TopAppBar(</span>
+            <span class="s1">title = {</span>
+                <span class="s1">Column {</span>
+                    <span class="s1">Text(</span>
+                        <span class="s1">text = </span><span class="s5">&quot;Presupuestos&quot;</span><span class="s3">,</span>
+                        <span class="s1">fontWeight = FontWeight.Bold</span><span class="s3">,</span>
+                        <span class="s1">fontSize = </span><span class="s2">22</span><span class="s1">.sp</span><span class="s3">,</span>
+                        <span class="s1">color = MaterialTheme.colorScheme.onBackground</span>
+                    <span class="s1">)</span>
+                    <span class="s1">Text(</span>
+                        <span class="s1">text = </span><span class="s5">&quot;Límites de gasto • </span><span class="s6">$</span><span class="s1">currentMonthName</span><span class="s5">&quot;</span><span class="s3">,</span>
+                        <span class="s1">fontSize = </span><span class="s2">12</span><span class="s1">.sp</span><span class="s3">,</span>
+                        <span class="s1">color = MaterialTheme.colorScheme.onSurfaceVariant</span>
+                    <span class="s1">)</span>
+                <span class="s1">}</span>
+            <span class="s1">}</span><span class="s3">,</span>
+            <span class="s1">colors = TopAppBarDefaults.topAppBarColors(</span>
+                <span class="s1">containerColor = MaterialTheme.colorScheme.background</span>
+            <span class="s1">)</span>
+        <span class="s1">)</span>
+
+        <span class="s1">MonthlyGlobalBudgetCard(</span>
+            <span class="s1">limit = monthlyBudgetLimit</span><span class="s3">,</span>
+            <span class="s1">spent = totalMonthlySpent</span><span class="s3">,</span>
+            <span class="s1">onEditLimitClick = { showEditMonthlyDialog = </span><span class="s0">true </span><span class="s1">}</span>
+        <span class="s1">)</span>
+
+        <span class="s1">Spacer(modifier = Modifier.height(</span><span class="s2">22</span><span class="s1">.dp))</span>
+
+        <span class="s1">Row(</span>
+            <span class="s1">modifier = Modifier.fillMaxWidth()</span><span class="s3">,</span>
+            <span class="s1">horizontalArrangement = Arrangement.SpaceBetween</span><span class="s3">,</span>
+            <span class="s1">verticalAlignment = Alignment.CenterVertically</span>
+        <span class="s1">) {</span>
+            <span class="s1">Text(</span>
+                <span class="s1">text = </span><span class="s5">&quot;Límites por categoría&quot;</span><span class="s3">,</span>
+                <span class="s1">style = MaterialTheme.typography.titleMedium</span><span class="s3">,</span>
+                <span class="s1">fontWeight = FontWeight.SemiBold</span><span class="s3">,</span>
+                <span class="s1">color = MaterialTheme.colorScheme.onBackground</span>
+            <span class="s1">)</span>
+
+            <span class="s1">FilledTonalButton(</span>
+                <span class="s1">onClick = {</span>
+                    <span class="s0">val </span><span class="s1">unconfigured = TransactionCategory.forType(TransactionType.EXPENSE)</span>
+                        <span class="s1">.firstOrNull { !categoryBudgets.containsKey(it) }</span>
+                        <span class="s1">?: TransactionCategory.ALIMENTACION</span>
+                    <span class="s1">editingCategoryBudget = unconfigured to categoryBudgets[unconfigured]</span>
+                <span class="s1">}</span><span class="s3">,</span>
+                <span class="s1">shape = RoundedCornerShape(</span><span class="s2">12</span><span class="s1">.dp)</span><span class="s3">,</span>
+                <span class="s1">colors = ButtonDefaults.filledTonalButtonColors(</span>
+                    <span class="s1">containerColor = EmeraldPrimary.copy(alpha = </span><span class="s2">0.18f</span><span class="s1">)</span><span class="s3">,</span>
+                    <span class="s1">contentColor = EmeraldPrimary</span>
+                <span class="s1">)</span><span class="s3">,</span>
+                <span class="s1">contentPadding = PaddingValues(horizontal = </span><span class="s2">12</span><span class="s1">.dp</span><span class="s3">, </span><span class="s1">vertical = </span><span class="s2">6</span><span class="s1">.dp)</span>
+            <span class="s1">) {</span>
+                <span class="s1">Icon(Icons.Rounded.Add</span><span class="s3">, </span><span class="s1">contentDescription = </span><span class="s0">null</span><span class="s3">, </span><span class="s1">modifier = Modifier.size(</span><span class="s2">16</span><span class="s1">.dp))</span>
+                <span class="s1">Spacer(modifier = Modifier.width(</span><span class="s2">4</span><span class="s1">.dp))</span>
+                <span class="s1">Text(</span><span class="s5">&quot;Límite&quot;</span><span class="s3">, </span><span class="s1">fontSize = </span><span class="s2">13</span><span class="s1">.sp</span><span class="s3">, </span><span class="s1">fontWeight = FontWeight.Bold)</span>
+            <span class="s1">}</span>
+        <span class="s1">}</span>
+
+        <span class="s1">Spacer(modifier = Modifier.height(</span><span class="s2">10</span><span class="s1">.dp))</span>
+
+        <span class="s0">if </span><span class="s1">(categoryBudgets.isEmpty()) {</span>
+            <span class="s1">EmptyTransactionsCard(</span><span class="s5">&quot;No tienes límites por categoría configurados&quot;</span><span class="s1">)</span>
+        <span class="s1">} </span><span class="s0">else </span><span class="s1">{</span>
+            <span class="s1">Column(verticalArrangement = Arrangement.spacedBy(</span><span class="s2">12</span><span class="s1">.dp)) {</span>
+                <span class="s1">categoryBudgets.forEach { (category</span><span class="s3">, </span><span class="s1">limit) -&gt;</span>
+                    <span class="s0">val </span><span class="s1">spent = spentByCategory[category] ?: </span><span class="s2">0.0</span>
+                    <span class="s1">CategoryBudgetCard(</span>
+                        <span class="s1">category = category</span><span class="s3">,</span>
+                        <span class="s1">spent = spent</span><span class="s3">,</span>
+                        <span class="s1">limit = limit</span><span class="s3">,</span>
+                        <span class="s1">onEdit = { editingCategoryBudget = category to limit }</span><span class="s3">,</span>
+                        <span class="s1">onDelete = { onRemoveCategoryBudget(category) }</span>
+                    <span class="s1">)</span>
+                <span class="s1">}</span>
+            <span class="s1">}</span>
+        <span class="s1">}</span>
+
+        <span class="s1">Spacer(modifier = Modifier.height(</span><span class="s2">24</span><span class="s1">.dp))</span>
+    <span class="s1">}</span>
+
+    <span class="s0">if </span><span class="s1">(showEditMonthlyDialog) {</span>
+        <span class="s1">EditMonthlyLimitDialog(</span>
+            <span class="s1">currentLimit = monthlyBudgetLimit</span><span class="s3">,</span>
+            <span class="s1">onDismiss = { showEditMonthlyDialog = </span><span class="s0">false </span><span class="s1">}</span><span class="s3">,</span>
+            <span class="s1">onSave = { newLimit -&gt;</span>
+                <span class="s1">onUpdateMonthlyLimit(newLimit)</span>
+                <span class="s1">showEditMonthlyDialog = </span><span class="s0">false</span>
+            <span class="s1">}</span>
+        <span class="s1">)</span>
+    <span class="s1">}</span>
+
+    <span class="s1">editingCategoryBudget?.let { (initialCategory</span><span class="s3">, </span><span class="s1">initialLimit) -&gt;</span>
+        <span class="s1">CategoryBudgetDialog(</span>
+            <span class="s1">initialCategory = initialCategory</span><span class="s3">,</span>
+            <span class="s1">initialLimit = initialLimit</span><span class="s3">,</span>
+            <span class="s1">existingBudgets = categoryBudgets</span><span class="s3">,</span>
+            <span class="s1">onDismiss = { editingCategoryBudget = </span><span class="s0">null </span><span class="s1">}</span><span class="s3">,</span>
+            <span class="s1">onSave = { selectedCat</span><span class="s3">, </span><span class="s1">newLimit -&gt;</span>
+                <span class="s1">onSaveCategoryBudget(selectedCat</span><span class="s3">, </span><span class="s1">newLimit)</span>
+                <span class="s1">editingCategoryBudget = </span><span class="s0">null</span>
+            <span class="s1">}</span>
+        <span class="s1">)</span>
+    <span class="s1">}</span>
+<span class="s1">}</span>
+
+<span class="s1">@Composable</span>
+<span class="s0">fun </span><span class="s1">MonthlyGlobalBudgetCard(</span>
+    <span class="s1">limit: Double</span><span class="s3">,</span>
+    <span class="s1">spent: Double</span><span class="s3">,</span>
+    <span class="s1">onEditLimitClick: () -&gt; Unit</span>
+<span class="s1">) {</span>
+    <span class="s0">val </span><span class="s1">remaining = limit - spent</span>
+    <span class="s0">val </span><span class="s1">rawRatio = </span><span class="s0">if </span><span class="s1">(limit &gt; </span><span class="s2">0</span><span class="s1">) (spent / limit).toFloat() </span><span class="s0">else </span><span class="s2">0f</span>
+    <span class="s0">val </span><span class="s1">animatedProgress by animateFloatAsState(</span>
+        <span class="s1">targetValue = rawRatio.coerceIn(</span><span class="s2">0f</span><span class="s3">, </span><span class="s2">1f</span><span class="s1">)</span><span class="s3">,</span>
+        <span class="s1">animationSpec = tween(durationMillis = </span><span class="s2">600</span><span class="s1">)</span><span class="s3">,</span>
+        <span class="s1">label = </span><span class="s5">&quot;monthlyBudgetProgress&quot;</span>
+    <span class="s1">)</span>
+
+    <span class="s0">val </span><span class="s1">statusColor = </span><span class="s0">when </span><span class="s1">{</span>
+        <span class="s1">spent &gt; limit -&gt; ExpenseRed</span>
+        <span class="s1">rawRatio &gt;= </span><span class="s2">0.8f </span><span class="s1">-&gt; WarningAmber</span>
+        <span class="s0">else </span><span class="s1">-&gt; EmeraldPrimary</span>
+    <span class="s1">}</span>
+
+    <span class="s1">Card(</span>
+        <span class="s1">modifier = Modifier.fillMaxWidth()</span><span class="s3">,</span>
+        <span class="s1">shape = RoundedCornerShape(</span><span class="s2">24</span><span class="s1">.dp)</span><span class="s3">,</span>
+        <span class="s1">colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)</span><span class="s3">,</span>
+        <span class="s1">border = BorderStroke(</span><span class="s2">1</span><span class="s1">.dp</span><span class="s3">, </span><span class="s1">statusColor.copy(alpha = </span><span class="s2">0.3f</span><span class="s1">))</span>
+    <span class="s1">) {</span>
+        <span class="s1">Column(modifier = Modifier.padding(</span><span class="s2">20</span><span class="s1">.dp)) {</span>
+            <span class="s1">Row(</span>
+                <span class="s1">modifier = Modifier.fillMaxWidth()</span><span class="s3">,</span>
+                <span class="s1">horizontalArrangement = Arrangement.SpaceBetween</span><span class="s3">,</span>
+                <span class="s1">verticalAlignment = Alignment.CenterVertically</span>
+            <span class="s1">) {</span>
+                <span class="s1">Column {</span>
+                    <span class="s1">Text(</span>
+                        <span class="s1">text = </span><span class="s5">&quot;Presupuesto mensual&quot;</span><span class="s3">,</span>
+                        <span class="s1">fontSize = </span><span class="s2">13</span><span class="s1">.sp</span><span class="s3">,</span>
+                        <span class="s1">color = MaterialTheme.colorScheme.onSurfaceVariant</span>
+                    <span class="s1">)</span>
+                    <span class="s1">Spacer(modifier = Modifier.height(</span><span class="s2">2</span><span class="s1">.dp))</span>
+                    <span class="s1">Text(</span>
+                        <span class="s1">text = formatCurrency(limit)</span><span class="s3">,</span>
+                        <span class="s1">fontSize = </span><span class="s2">28</span><span class="s1">.sp</span><span class="s3">,</span>
+                        <span class="s1">fontWeight = FontWeight.ExtraBold</span><span class="s3">,</span>
+                        <span class="s1">color = MaterialTheme.colorScheme.onSurface</span>
+                    <span class="s1">)</span>
+                <span class="s1">}</span>
+
+                <span class="s1">IconButton(</span>
+                    <span class="s1">onClick = onEditLimitClick</span><span class="s3">,</span>
+                    <span class="s1">modifier = Modifier</span>
+                        <span class="s1">.clip(RoundedCornerShape(</span><span class="s2">12</span><span class="s1">.dp))</span>
+                        <span class="s1">.background(MaterialTheme.colorScheme.surfaceVariant)</span>
+                <span class="s1">) {</span>
+                    <span class="s1">Icon(</span>
+                        <span class="s1">imageVector = Icons.Rounded.Edit</span><span class="s3">,</span>
+                        <span class="s1">contentDescription = </span><span class="s5">&quot;Editar presupuesto mensual&quot;</span><span class="s3">,</span>
+                        <span class="s1">tint = EmeraldPrimary</span><span class="s3">,</span>
+                        <span class="s1">modifier = Modifier.size(</span><span class="s2">20</span><span class="s1">.dp)</span>
+                    <span class="s1">)</span>
+                <span class="s1">}</span>
+            <span class="s1">}</span>
+
+            <span class="s1">Spacer(modifier = Modifier.height(</span><span class="s2">16</span><span class="s1">.dp))</span>
+
+            <span class="s1">LinearProgressIndicator(</span>
+                <span class="s1">progress = { animatedProgress }</span><span class="s3">,</span>
+                <span class="s1">modifier = Modifier</span>
+                    <span class="s1">.fillMaxWidth()</span>
+                    <span class="s1">.height(</span><span class="s2">10</span><span class="s1">.dp)</span>
+                    <span class="s1">.clip(CircleShape)</span><span class="s3">,</span>
+                <span class="s1">color = statusColor</span><span class="s3">,</span>
+                <span class="s1">trackColor = MaterialTheme.colorScheme.surfaceVariant</span>
+            <span class="s1">)</span>
+
+            <span class="s1">Spacer(modifier = Modifier.height(</span><span class="s2">8</span><span class="s1">.dp))</span>
+
+            <span class="s1">Row(</span>
+                <span class="s1">modifier = Modifier.fillMaxWidth()</span><span class="s3">,</span>
+                <span class="s1">horizontalArrangement = Arrangement.SpaceBetween</span>
+            <span class="s1">) {</span>
+                <span class="s1">Text(</span>
+                    <span class="s1">text = </span><span class="s5">&quot;</span><span class="s6">${</span><span class="s1">(rawRatio * </span><span class="s2">100</span><span class="s1">).toInt()</span><span class="s6">}</span><span class="s5">% utilizado&quot;</span><span class="s3">,</span>
+                    <span class="s1">fontSize = </span><span class="s2">12</span><span class="s1">.sp</span><span class="s3">,</span>
+                    <span class="s1">fontWeight = FontWeight.Medium</span><span class="s3">,</span>
+                    <span class="s1">color = statusColor</span>
+                <span class="s1">)</span>
+                <span class="s0">if </span><span class="s1">(remaining &lt; </span><span class="s2">0</span><span class="s1">) {</span>
+                    <span class="s1">Text(</span>
+                        <span class="s1">text = </span><span class="s5">&quot;Excedido por </span><span class="s6">${</span><span class="s1">formatCurrency(-remaining)</span><span class="s6">}</span><span class="s5">&quot;</span><span class="s3">,</span>
+                        <span class="s1">fontSize = </span><span class="s2">12</span><span class="s1">.sp</span><span class="s3">,</span>
+                        <span class="s1">fontWeight = FontWeight.SemiBold</span><span class="s3">,</span>
+                        <span class="s1">color = ExpenseRed</span>
+                    <span class="s1">)</span>
+                <span class="s1">}</span>
+            <span class="s1">}</span>
+
+            <span class="s1">Spacer(modifier = Modifier.height(</span><span class="s2">16</span><span class="s1">.dp))</span>
+
+            <span class="s1">Row(</span>
+                <span class="s1">modifier = Modifier.fillMaxWidth()</span><span class="s3">,</span>
+                <span class="s1">horizontalArrangement = Arrangement.spacedBy(</span><span class="s2">12</span><span class="s1">.dp)</span>
+            <span class="s1">) {</span>
+                <span class="s1">Surface(</span>
+                    <span class="s1">modifier = Modifier.weight(</span><span class="s2">1f</span><span class="s1">)</span><span class="s3">,</span>
+                    <span class="s1">shape = RoundedCornerShape(</span><span class="s2">16</span><span class="s1">.dp)</span><span class="s3">,</span>
+                    <span class="s1">color = MaterialTheme.colorScheme.surfaceVariant</span>
+                <span class="s1">) {</span>
+                    <span class="s1">Column(modifier = Modifier.padding(</span><span class="s2">12</span><span class="s1">.dp)) {</span>
+                        <span class="s1">Text(</span>
+                            <span class="s1">text = </span><span class="s5">&quot;Gastado este mes&quot;</span><span class="s3">,</span>
+                            <span class="s1">fontSize = </span><span class="s2">12</span><span class="s1">.sp</span><span class="s3">,</span>
+                            <span class="s1">color = MaterialTheme.colorScheme.onSurfaceVariant</span>
+                        <span class="s1">)</span>
+                        <span class="s1">Spacer(modifier = Modifier.height(</span><span class="s2">4</span><span class="s1">.dp))</span>
+                        <span class="s1">Text(</span>
+                            <span class="s1">text = formatCurrency(spent)</span><span class="s3">,</span>
+                            <span class="s1">fontSize = </span><span class="s2">16</span><span class="s1">.sp</span><span class="s3">,</span>
+                            <span class="s1">fontWeight = FontWeight.Bold</span><span class="s3">,</span>
+                            <span class="s1">color = ExpenseRed</span>
+                        <span class="s1">)</span>
+                    <span class="s1">}</span>
+                <span class="s1">}</span>
+
+                <span class="s1">Surface(</span>
+                    <span class="s1">modifier = Modifier.weight(</span><span class="s2">1f</span><span class="s1">)</span><span class="s3">,</span>
+                    <span class="s1">shape = RoundedCornerShape(</span><span class="s2">16</span><span class="s1">.dp)</span><span class="s3">,</span>
+                    <span class="s1">color = MaterialTheme.colorScheme.surfaceVariant</span>
+                <span class="s1">) {</span>
+                    <span class="s1">Column(modifier = Modifier.padding(</span><span class="s2">12</span><span class="s1">.dp)) {</span>
+                        <span class="s1">Text(</span>
+                            <span class="s1">text = </span><span class="s0">if </span><span class="s1">(remaining &gt;= </span><span class="s2">0</span><span class="s1">) </span><span class="s5">&quot;Te queda disponible&quot; </span><span class="s0">else </span><span class="s5">&quot;Sobre el límite&quot;</span><span class="s3">,</span>
+                            <span class="s1">fontSize = </span><span class="s2">12</span><span class="s1">.sp</span><span class="s3">,</span>
+                            <span class="s1">color = MaterialTheme.colorScheme.onSurfaceVariant</span>
+                        <span class="s1">)</span>
+                        <span class="s1">Spacer(modifier = Modifier.height(</span><span class="s2">4</span><span class="s1">.dp))</span>
+                        <span class="s1">Text(</span>
+                            <span class="s1">text = formatCurrency(</span><span class="s0">if </span><span class="s1">(remaining &gt;= </span><span class="s2">0</span><span class="s1">) remaining </span><span class="s0">else </span><span class="s1">-remaining)</span><span class="s3">,</span>
+                            <span class="s1">fontSize = </span><span class="s2">16</span><span class="s1">.sp</span><span class="s3">,</span>
+                            <span class="s1">fontWeight = FontWeight.Bold</span><span class="s3">,</span>
+                            <span class="s1">color = </span><span class="s0">if </span><span class="s1">(remaining &gt;= </span><span class="s2">0</span><span class="s1">) EmeraldPrimary </span><span class="s0">else </span><span class="s1">ExpenseRed</span>
+                        <span class="s1">)</span>
+                    <span class="s1">}</span>
+                <span class="s1">}</span>
+            <span class="s1">}</span>
+        <span class="s1">}</span>
+    <span class="s1">}</span>
+<span class="s1">}</span>
+
+<span class="s1">@Composable</span>
+<span class="s0">fun </span><span class="s1">CategoryBudgetCard(</span>
+    <span class="s1">category: TransactionCategory</span><span class="s3">,</span>
+    <span class="s1">spent: Double</span><span class="s3">,</span>
+    <span class="s1">limit: Double</span><span class="s3">,</span>
+    <span class="s1">onEdit: () -&gt; Unit</span><span class="s3">,</span>
+    <span class="s1">onDelete: () -&gt; Unit</span>
+<span class="s1">) {</span>
+    <span class="s0">val </span><span class="s1">remaining = limit - spent</span>
+    <span class="s0">val </span><span class="s1">rawRatio = </span><span class="s0">if </span><span class="s1">(limit &gt; </span><span class="s2">0</span><span class="s1">) (spent / limit).toFloat() </span><span class="s0">else </span><span class="s2">0f</span>
+    <span class="s0">val </span><span class="s1">animatedProgress by animateFloatAsState(</span>
+        <span class="s1">targetValue = rawRatio.coerceIn(</span><span class="s2">0f</span><span class="s3">, </span><span class="s2">1f</span><span class="s1">)</span><span class="s3">,</span>
+        <span class="s1">animationSpec = tween(durationMillis = </span><span class="s2">500</span><span class="s1">)</span><span class="s3">,</span>
+        <span class="s1">label = </span><span class="s5">&quot;catBudgetProgress&quot;</span>
+    <span class="s1">)</span>
+
+    <span class="s0">val </span><span class="s1">statusColor = </span><span class="s0">when </span><span class="s1">{</span>
+        <span class="s1">spent &gt; limit -&gt; ExpenseRed</span>
+        <span class="s1">rawRatio &gt;= </span><span class="s2">0.8f </span><span class="s1">-&gt; WarningAmber</span>
+        <span class="s0">else </span><span class="s1">-&gt; EmeraldPrimary</span>
+    <span class="s1">}</span>
+
+    <span class="s1">Card(</span>
+        <span class="s1">modifier = Modifier</span>
+            <span class="s1">.fillMaxWidth()</span>
+            <span class="s1">.clip(RoundedCornerShape(</span><span class="s2">20</span><span class="s1">.dp))</span>
+            <span class="s1">.clickable { onEdit() }</span><span class="s3">,</span>
+        <span class="s1">shape = RoundedCornerShape(</span><span class="s2">20</span><span class="s1">.dp)</span><span class="s3">,</span>
+        <span class="s1">colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)</span>
+    <span class="s1">) {</span>
+        <span class="s1">Column(modifier = Modifier.padding(</span><span class="s2">16</span><span class="s1">.dp)) {</span>
+            <span class="s1">Row(</span>
+                <span class="s1">modifier = Modifier.fillMaxWidth()</span><span class="s3">,</span>
+                <span class="s1">verticalAlignment = Alignment.CenterVertically</span>
+            <span class="s1">) {</span>
+                <span class="s1">Box(</span>
+                    <span class="s1">modifier = Modifier</span>
+                        <span class="s1">.size(</span><span class="s2">40</span><span class="s1">.dp)</span>
+                        <span class="s1">.clip(RoundedCornerShape(</span><span class="s2">12</span><span class="s1">.dp))</span>
+                        <span class="s1">.background(category.chartColor.copy(alpha = </span><span class="s2">0.16f</span><span class="s1">))</span><span class="s3">,</span>
+                    <span class="s1">contentAlignment = Alignment.Center</span>
+                <span class="s1">) {</span>
+                    <span class="s1">Icon(</span>
+                        <span class="s1">imageVector = category.icon</span><span class="s3">,</span>
+                        <span class="s1">contentDescription = </span><span class="s0">null</span><span class="s3">,</span>
+                        <span class="s1">tint = category.chartColor</span><span class="s3">,</span>
+                        <span class="s1">modifier = Modifier.size(</span><span class="s2">20</span><span class="s1">.dp)</span>
+                    <span class="s1">)</span>
+                <span class="s1">}</span>
+
+                <span class="s1">Spacer(modifier = Modifier.width(</span><span class="s2">12</span><span class="s1">.dp))</span>
+
+                <span class="s1">Column(modifier = Modifier.weight(</span><span class="s2">1f</span><span class="s1">)) {</span>
+                    <span class="s1">Text(</span>
+                        <span class="s1">text = category.displayName</span><span class="s3">,</span>
+                        <span class="s1">fontSize = </span><span class="s2">15</span><span class="s1">.sp</span><span class="s3">,</span>
+                        <span class="s1">fontWeight = FontWeight.Bold</span><span class="s3">,</span>
+                        <span class="s1">color = MaterialTheme.colorScheme.onSurface</span>
+                    <span class="s1">)</span>
+                    <span class="s1">Text(</span>
+                        <span class="s1">text = </span><span class="s5">&quot;</span><span class="s6">${</span><span class="s1">formatCurrency(spent)</span><span class="s6">} </span><span class="s5">de </span><span class="s6">${</span><span class="s1">formatCurrency(limit)</span><span class="s6">}</span><span class="s5">&quot;</span><span class="s3">,</span>
+                        <span class="s1">fontSize = </span><span class="s2">12</span><span class="s1">.sp</span><span class="s3">,</span>
+                        <span class="s1">color = MaterialTheme.colorScheme.onSurfaceVariant</span>
+                    <span class="s1">)</span>
+                <span class="s1">}</span>
+
+                <span class="s1">Column(horizontalAlignment = Alignment.End) {</span>
+                    <span class="s1">Text(</span>
+                        <span class="s1">text = </span><span class="s0">if </span><span class="s1">(remaining &gt;= </span><span class="s2">0</span><span class="s1">) </span><span class="s5">&quot;Quedan&quot; </span><span class="s0">else </span><span class="s5">&quot;Excedido&quot;</span><span class="s3">,</span>
+                        <span class="s1">fontSize = </span><span class="s2">11</span><span class="s1">.sp</span><span class="s3">,</span>
+                        <span class="s1">color = MaterialTheme.colorScheme.onSurfaceVariant</span>
+                    <span class="s1">)</span>
+                    <span class="s1">Text(</span>
+                        <span class="s1">text = formatCurrency(</span><span class="s0">if </span><span class="s1">(remaining &gt;= </span><span class="s2">0</span><span class="s1">) remaining </span><span class="s0">else </span><span class="s1">-remaining)</span><span class="s3">,</span>
+                        <span class="s1">fontSize = </span><span class="s2">14</span><span class="s1">.sp</span><span class="s3">,</span>
+                        <span class="s1">fontWeight = FontWeight.Bold</span><span class="s3">,</span>
+                        <span class="s1">color = statusColor</span>
+                    <span class="s1">)</span>
+                <span class="s1">}</span>
+
+                <span class="s1">IconButton(onClick = onDelete) {</span>
+                    <span class="s1">Icon(</span>
+                        <span class="s1">imageVector = Icons.Rounded.DeleteOutline</span><span class="s3">,</span>
+                        <span class="s1">contentDescription = </span><span class="s5">&quot;Eliminar límite&quot;</span><span class="s3">,</span>
+                        <span class="s1">tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = </span><span class="s2">0.7f</span><span class="s1">)</span><span class="s3">,</span>
+                        <span class="s1">modifier = Modifier.size(</span><span class="s2">19</span><span class="s1">.dp)</span>
+                    <span class="s1">)</span>
+                <span class="s1">}</span>
+            <span class="s1">}</span>
+
+            <span class="s1">Spacer(modifier = Modifier.height(</span><span class="s2">12</span><span class="s1">.dp))</span>
+
+            <span class="s1">LinearProgressIndicator(</span>
+                <span class="s1">progress = { animatedProgress }</span><span class="s3">,</span>
+                <span class="s1">modifier = Modifier</span>
+                    <span class="s1">.fillMaxWidth()</span>
+                    <span class="s1">.height(</span><span class="s2">7</span><span class="s1">.dp)</span>
+                    <span class="s1">.clip(CircleShape)</span><span class="s3">,</span>
+                <span class="s1">color = statusColor</span><span class="s3">,</span>
+                <span class="s1">trackColor = MaterialTheme.colorScheme.surfaceVariant</span>
+            <span class="s1">)</span>
+        <span class="s1">}</span>
+    <span class="s1">}</span>
+<span class="s1">}</span>
+
+<span class="s1">@Composable</span>
+<span class="s0">fun </span><span class="s1">EditMonthlyLimitDialog(</span>
+    <span class="s1">currentLimit: Double</span><span class="s3">,</span>
+    <span class="s1">onDismiss: () -&gt; Unit</span><span class="s3">,</span>
+    <span class="s1">onSave: (Double) -&gt; Unit</span>
+<span class="s1">) {</span>
+    <span class="s0">var </span><span class="s1">limitText by remember {</span>
+        <span class="s1">mutableStateOf(String.format(Locale.US</span><span class="s3">, </span><span class="s5">&quot;%.2f&quot;</span><span class="s3">, </span><span class="s1">currentLimit))</span>
+    <span class="s1">}</span>
+
+    <span class="s1">AlertDialog(</span>
+        <span class="s1">onDismissRequest = onDismiss</span><span class="s3">,</span>
+        <span class="s1">containerColor = MaterialTheme.colorScheme.surface</span><span class="s3">,</span>
+        <span class="s1">shape = RoundedCornerShape(</span><span class="s2">24</span><span class="s1">.dp)</span><span class="s3">,</span>
+        <span class="s1">title = {</span>
+            <span class="s1">Text(</span>
+                <span class="s1">text = </span><span class="s5">&quot;Presupuesto mensual&quot;</span><span class="s3">,</span>
+                <span class="s1">fontWeight = FontWeight.Bold</span><span class="s3">,</span>
+                <span class="s1">color = MaterialTheme.colorScheme.onSurface</span>
+            <span class="s1">)</span>
+        <span class="s1">}</span><span class="s3">,</span>
+        <span class="s1">text = {</span>
+            <span class="s1">Column(verticalArrangement = Arrangement.spacedBy(</span><span class="s2">10</span><span class="s1">.dp)) {</span>
+                <span class="s1">Text(</span>
+                    <span class="s1">text = </span><span class="s5">&quot;Establece cuánto dinero máximo quieres gastar al mes en total.&quot;</span><span class="s3">,</span>
+                    <span class="s1">fontSize = </span><span class="s2">13</span><span class="s1">.sp</span><span class="s3">,</span>
+                    <span class="s1">color = MaterialTheme.colorScheme.onSurfaceVariant</span>
+                <span class="s1">)</span>
+                <span class="s1">OutlinedTextField(</span>
+                    <span class="s1">value = limitText</span><span class="s3">,</span>
+                    <span class="s1">onValueChange = { limitText = it }</span><span class="s3">,</span>
+                    <span class="s1">label = { Text(</span><span class="s5">&quot;Límite mensual (€)&quot;</span><span class="s1">) }</span><span class="s3">,</span>
+                    <span class="s1">singleLine = </span><span class="s0">true</span><span class="s3">,</span>
+                    <span class="s1">keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)</span><span class="s3">,</span>
+                    <span class="s1">shape = RoundedCornerShape(</span><span class="s2">14</span><span class="s1">.dp)</span><span class="s3">,</span>
+                    <span class="s1">modifier = Modifier.fillMaxWidth()</span>
+                <span class="s1">)</span>
+            <span class="s1">}</span>
+        <span class="s1">}</span><span class="s3">,</span>
+        <span class="s1">confirmButton = {</span>
+            <span class="s1">Button(</span>
+                <span class="s1">onClick = {</span>
+                    <span class="s0">val </span><span class="s1">parsed = limitText.replace(</span><span class="s5">&quot;,&quot;</span><span class="s3">, </span><span class="s5">&quot;.&quot;</span><span class="s1">).toDoubleOrNull()</span>
+                    <span class="s0">if </span><span class="s1">(parsed != </span><span class="s0">null </span><span class="s1">&amp;&amp; parsed &gt; </span><span class="s2">0</span><span class="s1">) {</span>
+                        <span class="s1">onSave(parsed)</span>
+                    <span class="s1">}</span>
+                <span class="s1">}</span><span class="s3">,</span>
+                <span class="s1">colors = ButtonDefaults.buttonColors(</span>
+                    <span class="s1">containerColor = EmeraldPrimary</span><span class="s3">,</span>
+                    <span class="s1">contentColor = DarkBackground</span>
+                <span class="s1">)</span>
+            <span class="s1">) {</span>
+                <span class="s1">Text(</span><span class="s5">&quot;Guardar&quot;</span><span class="s3">, </span><span class="s1">fontWeight = FontWeight.Bold)</span>
+            <span class="s1">}</span>
+        <span class="s1">}</span><span class="s3">,</span>
+        <span class="s1">dismissButton = {</span>
+            <span class="s1">TextButton(onClick = onDismiss) {</span>
+                <span class="s1">Text(</span><span class="s5">&quot;Cancelar&quot;</span><span class="s3">, </span><span class="s1">color = MaterialTheme.colorScheme.onSurfaceVariant)</span>
+            <span class="s1">}</span>
+        <span class="s1">}</span>
+    <span class="s1">)</span>
+<span class="s1">}</span>
+
+<span class="s1">@OptIn(ExperimentalLayoutApi::</span><span class="s0">class</span><span class="s1">)</span>
+<span class="s1">@Composable</span>
+<span class="s0">fun </span><span class="s1">CategoryBudgetDialog(</span>
+    <span class="s1">initialCategory: TransactionCategory</span><span class="s3">,</span>
+    <span class="s1">initialLimit: Double?</span><span class="s3">,</span>
+    <span class="s1">existingBudgets: Map&lt;TransactionCategory</span><span class="s3">, </span><span class="s1">Double&gt;</span><span class="s3">,</span>
+    <span class="s1">onDismiss: () -&gt; Unit</span><span class="s3">,</span>
+    <span class="s1">onSave: (TransactionCategory</span><span class="s3">, </span><span class="s1">Double) -&gt; Unit</span>
+<span class="s1">) {</span>
+    <span class="s0">var </span><span class="s1">selectedCategory by remember { mutableStateOf(initialCategory) }</span>
+    <span class="s0">var </span><span class="s1">limitText by remember {</span>
+        <span class="s1">mutableStateOf(</span>
+            <span class="s1">(initialLimit ?: existingBudgets[initialCategory])</span>
+                <span class="s1">?.let { String.format(Locale.US</span><span class="s3">, </span><span class="s5">&quot;%.2f&quot;</span><span class="s3">, </span><span class="s1">it) } ?: </span><span class="s5">&quot;&quot;</span>
+        <span class="s1">)</span>
+    <span class="s1">}</span>
+
+    <span class="s0">val </span><span class="s1">expenseCategories = remember { TransactionCategory.forType(TransactionType.EXPENSE) }</span>
+
+    <span class="s1">AlertDialog(</span>
+        <span class="s1">onDismissRequest = onDismiss</span><span class="s3">,</span>
+        <span class="s1">containerColor = MaterialTheme.colorScheme.surface</span><span class="s3">,</span>
+        <span class="s1">shape = RoundedCornerShape(</span><span class="s2">24</span><span class="s1">.dp)</span><span class="s3">,</span>
+        <span class="s1">title = {</span>
+            <span class="s1">Text(</span>
+                <span class="s1">text = </span><span class="s5">&quot;Límite por categoría&quot;</span><span class="s3">,</span>
+                <span class="s1">fontWeight = FontWeight.Bold</span><span class="s3">,</span>
+                <span class="s1">color = MaterialTheme.colorScheme.onSurface</span>
+            <span class="s1">)</span>
+        <span class="s1">}</span><span class="s3">,</span>
+        <span class="s1">text = {</span>
+            <span class="s1">Column(verticalArrangement = Arrangement.spacedBy(</span><span class="s2">12</span><span class="s1">.dp)) {</span>
+                <span class="s1">Text(</span>
+                    <span class="s1">text = </span><span class="s5">&quot;Selecciona una categoría de gasto y define su tope mensual:&quot;</span><span class="s3">,</span>
+                    <span class="s1">fontSize = </span><span class="s2">13</span><span class="s1">.sp</span><span class="s3">,</span>
+                    <span class="s1">color = MaterialTheme.colorScheme.onSurfaceVariant</span>
+                <span class="s1">)</span>
+
+                <span class="s1">FlowRow(</span>
+                    <span class="s1">horizontalArrangement = Arrangement.spacedBy(</span><span class="s2">6</span><span class="s1">.dp)</span><span class="s3">,</span>
+                    <span class="s1">verticalArrangement = Arrangement.spacedBy(</span><span class="s2">6</span><span class="s1">.dp)</span><span class="s3">,</span>
+                    <span class="s1">modifier = Modifier.fillMaxWidth()</span>
+                <span class="s1">) {</span>
+                    <span class="s1">expenseCategories.forEach { cat -&gt;</span>
+                        <span class="s0">val </span><span class="s1">isSelected = selectedCategory == cat</span>
+                        <span class="s1">FilterChip(</span>
+                            <span class="s1">selected = isSelected</span><span class="s3">,</span>
+                            <span class="s1">onClick = {</span>
+                                <span class="s1">selectedCategory = cat</span>
+                                <span class="s1">limitText = existingBudgets[cat]</span>
+                                    <span class="s1">?.let { String.format(Locale.US</span><span class="s3">, </span><span class="s5">&quot;%.2f&quot;</span><span class="s3">, </span><span class="s1">it) } ?: </span><span class="s5">&quot;&quot;</span>
+                            <span class="s1">}</span><span class="s3">,</span>
+                            <span class="s1">leadingIcon = {</span>
+                                <span class="s1">Icon(</span>
+                                    <span class="s1">imageVector = cat.icon</span><span class="s3">,</span>
+                                    <span class="s1">contentDescription = </span><span class="s0">null</span><span class="s3">,</span>
+                                    <span class="s1">modifier = Modifier.size(</span><span class="s2">16</span><span class="s1">.dp)</span>
+                                <span class="s1">)</span>
+                            <span class="s1">}</span><span class="s3">,</span>
+                            <span class="s1">label = { Text(cat.displayName</span><span class="s3">, </span><span class="s1">fontSize = </span><span class="s2">12</span><span class="s1">.sp) }</span><span class="s3">,</span>
+                            <span class="s1">shape = RoundedCornerShape(</span><span class="s2">12</span><span class="s1">.dp)</span><span class="s3">,</span>
+                            <span class="s1">colors = FilterChipDefaults.filterChipColors(</span>
+                                <span class="s1">containerColor = MaterialTheme.colorScheme.surfaceVariant</span><span class="s3">,</span>
+                                <span class="s1">labelColor = MaterialTheme.colorScheme.onSurfaceVariant</span><span class="s3">,</span>
+                                <span class="s1">iconColor = MaterialTheme.colorScheme.onSurfaceVariant</span><span class="s3">,</span>
+                                <span class="s1">selectedContainerColor = EmeraldPrimary.copy(alpha = </span><span class="s2">0.22f</span><span class="s1">)</span><span class="s3">,</span>
+                                <span class="s1">selectedLabelColor = EmeraldPrimary</span><span class="s3">,</span>
+                                <span class="s1">selectedLeadingIconColor = EmeraldPrimary</span>
+                            <span class="s1">)</span>
+                        <span class="s1">)</span>
+                    <span class="s1">}</span>
+                <span class="s1">}</span>
+
+                <span class="s1">OutlinedTextField(</span>
+                    <span class="s1">value = limitText</span><span class="s3">,</span>
+                    <span class="s1">onValueChange = { limitText = it }</span><span class="s3">,</span>
+                    <span class="s1">label = { Text(</span><span class="s5">&quot;Límite mensual para </span><span class="s6">${</span><span class="s1">selectedCategory.displayName</span><span class="s6">} </span><span class="s5">(€)&quot;</span><span class="s1">) }</span><span class="s3">,</span>
+                    <span class="s1">singleLine = </span><span class="s0">true</span><span class="s3">,</span>
+                    <span class="s1">keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)</span><span class="s3">,</span>
+                    <span class="s1">shape = RoundedCornerShape(</span><span class="s2">14</span><span class="s1">.dp)</span><span class="s3">,</span>
+                    <span class="s1">modifier = Modifier.fillMaxWidth()</span>
+                <span class="s1">)</span>
+            <span class="s1">}</span>
+        <span class="s1">}</span><span class="s3">,</span>
+        <span class="s1">confirmButton = {</span>
+            <span class="s1">Button(</span>
+                <span class="s1">onClick = {</span>
+                    <span class="s0">val </span><span class="s1">parsed = limitText.replace(</span><span class="s5">&quot;,&quot;</span><span class="s3">, </span><span class="s5">&quot;.&quot;</span><span class="s1">).toDoubleOrNull()</span>
+                    <span class="s0">if </span><span class="s1">(parsed != </span><span class="s0">null </span><span class="s1">&amp;&amp; parsed &gt; </span><span class="s2">0</span><span class="s1">) {</span>
+                        <span class="s1">onSave(selectedCategory</span><span class="s3">, </span><span class="s1">parsed)</span>
+                    <span class="s1">}</span>
+                <span class="s1">}</span><span class="s3">,</span>
+                <span class="s1">colors = ButtonDefaults.buttonColors(</span>
+                    <span class="s1">containerColor = EmeraldPrimary</span><span class="s3">,</span>
+                    <span class="s1">contentColor = DarkBackground</span>
+                <span class="s1">)</span>
+            <span class="s1">) {</span>
+                <span class="s1">Text(</span><span class="s5">&quot;Guardar&quot;</span><span class="s3">, </span><span class="s1">fontWeight = FontWeight.Bold)</span>
+            <span class="s1">}</span>
+        <span class="s1">}</span><span class="s3">,</span>
+        <span class="s1">dismissButton = {</span>
+            <span class="s1">TextButton(onClick = onDismiss) {</span>
+                <span class="s1">Text(</span><span class="s5">&quot;Cancelar&quot;</span><span class="s3">, </span><span class="s1">color = MaterialTheme.colorScheme.onSurfaceVariant)</span>
+            <span class="s1">}</span>
+        <span class="s1">}</span>
+    <span class="s1">)</span>
+<span class="s1">}</span>
+
+<span class="s4">// ==========================================</span>
+<span class="s4">// PANTALLA 4: ESTADÍSTICAS Y GRÁFICOS</span>
+<span class="s4">// ==========================================</span>
+<span class="s1">@OptIn(ExperimentalMaterial3Api::</span><span class="s0">class</span><span class="s1">)</span>
+<span class="s1">@Composable</span>
+<span class="s0">fun </span><span class="s1">StatisticsScreen(transactions: List&lt;Transaction&gt;) {</span>
+    <span class="s0">val </span><span class="s1">snapshotList = transactions.toList()</span>
+
+    <span class="s0">val </span><span class="s1">totalIncome = remember(snapshotList) {</span>
+        <span class="s1">snapshotList.filter { it.type == TransactionType.INCOME }.sumOf { it.amount }</span>
+    <span class="s1">}</span>
+    <span class="s0">val </span><span class="s1">totalExpense = remember(snapshotList) {</span>
+        <span class="s1">snapshotList.filter { it.type == TransactionType.EXPENSE }.sumOf { it.amount }</span>
+    <span class="s1">}</span>
+    <span class="s0">val </span><span class="s1">expensesByCategory = remember(snapshotList) {</span>
+        <span class="s1">snapshotList</span>
+            <span class="s1">.filter { it.type == TransactionType.EXPENSE }</span>
+            <span class="s1">.groupBy { it.category }</span>
+            <span class="s1">.mapValues { entry -&gt; entry.value.sumOf { it.amount } }</span>
+            <span class="s1">.toList()</span>
+            <span class="s1">.sortedByDescending { it.second }</span>
+    <span class="s1">}</span>
+
+    <span class="s1">Column(</span>
+        <span class="s1">modifier = Modifier</span>
+            <span class="s1">.fillMaxSize()</span>
+            <span class="s1">.padding(horizontal = </span><span class="s2">16</span><span class="s1">.dp)</span>
+            <span class="s1">.verticalScroll(rememberScrollState())</span>
+    <span class="s1">) {</span>
+        <span class="s1">TopAppBar(</span>
+            <span class="s1">title = {</span>
+                <span class="s1">Column {</span>
+                    <span class="s1">Text(</span>
+                        <span class="s1">text = </span><span class="s5">&quot;Estadísticas&quot;</span><span class="s3">,</span>
+                        <span class="s1">fontWeight = FontWeight.Bold</span><span class="s3">,</span>
+                        <span class="s1">fontSize = </span><span class="s2">22</span><span class="s1">.sp</span><span class="s3">,</span>
+                        <span class="s1">color = MaterialTheme.colorScheme.onBackground</span>
+                    <span class="s1">)</span>
+                    <span class="s1">Text(</span>
+                        <span class="s1">text = </span><span class="s5">&quot;Análisis visual de tus finanzas&quot;</span><span class="s3">,</span>
+                        <span class="s1">fontSize = </span><span class="s2">12</span><span class="s1">.sp</span><span class="s3">,</span>
+                        <span class="s1">color = MaterialTheme.colorScheme.onSurfaceVariant</span>
+                    <span class="s1">)</span>
+                <span class="s1">}</span>
+            <span class="s1">}</span><span class="s3">,</span>
+            <span class="s1">colors = TopAppBarDefaults.topAppBarColors(</span>
+                <span class="s1">containerColor = MaterialTheme.colorScheme.background</span>
+            <span class="s1">)</span>
+        <span class="s1">)</span>
+
+        <span class="s1">IncomeVsExpenseChartCard(</span>
+            <span class="s1">totalIncome = totalIncome</span><span class="s3">,</span>
+            <span class="s1">totalExpense = totalExpense</span>
+        <span class="s1">)</span>
+
+        <span class="s1">Spacer(modifier = Modifier.height(</span><span class="s2">16</span><span class="s1">.dp))</span>
+
+        <span class="s1">ExpensesByCategoryCard(</span>
+            <span class="s1">expensesByCategory = expensesByCategory</span><span class="s3">,</span>
+            <span class="s1">totalExpense = totalExpense</span>
+        <span class="s1">)</span>
+
+        <span class="s1">Spacer(modifier = Modifier.height(</span><span class="s2">24</span><span class="s1">.dp))</span>
+    <span class="s1">}</span>
+<span class="s1">}</span>
+
+<span class="s1">@Composable</span>
+<span class="s0">fun </span><span class="s1">IncomeVsExpenseChartCard(</span>
+    <span class="s1">totalIncome: Double</span><span class="s3">,</span>
+    <span class="s1">totalExpense: Double</span>
+<span class="s1">) {</span>
+    <span class="s0">val </span><span class="s1">maxVal = maxOf(totalIncome</span><span class="s3">, </span><span class="s1">totalExpense</span><span class="s3">, </span><span class="s2">1.0</span><span class="s1">)</span>
+    <span class="s0">val </span><span class="s1">incomeRatio by animateFloatAsState(</span>
+        <span class="s1">targetValue = (totalIncome / maxVal).toFloat().coerceIn(</span><span class="s2">0f</span><span class="s3">, </span><span class="s2">1f</span><span class="s1">)</span><span class="s3">,</span>
+        <span class="s1">animationSpec = tween(durationMillis = </span><span class="s2">600</span><span class="s1">)</span><span class="s3">,</span>
+        <span class="s1">label = </span><span class="s5">&quot;incomeBar&quot;</span>
+    <span class="s1">)</span>
+    <span class="s0">val </span><span class="s1">expenseRatio by animateFloatAsState(</span>
+        <span class="s1">targetValue = (totalExpense / maxVal).toFloat().coerceIn(</span><span class="s2">0f</span><span class="s3">, </span><span class="s2">1f</span><span class="s1">)</span><span class="s3">,</span>
+        <span class="s1">animationSpec = tween(durationMillis = </span><span class="s2">600</span><span class="s1">)</span><span class="s3">,</span>
+        <span class="s1">label = </span><span class="s5">&quot;expenseBar&quot;</span>
+    <span class="s1">)</span>
+
+    <span class="s0">val </span><span class="s1">savingsRate = </span><span class="s0">if </span><span class="s1">(totalIncome &gt; </span><span class="s2">0</span><span class="s1">) {</span>
+        <span class="s1">(((totalIncome - totalExpense) / totalIncome) * </span><span class="s2">100</span><span class="s1">).toInt()</span>
+    <span class="s1">} </span><span class="s0">else </span><span class="s1">{</span>
+        <span class="s2">0</span>
+    <span class="s1">}</span>
+
+    <span class="s1">Card(</span>
+        <span class="s1">modifier = Modifier.fillMaxWidth()</span><span class="s3">,</span>
+        <span class="s1">shape = RoundedCornerShape(</span><span class="s2">24</span><span class="s1">.dp)</span><span class="s3">,</span>
+        <span class="s1">colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)</span>
+    <span class="s1">) {</span>
+        <span class="s1">Column(modifier = Modifier.padding(</span><span class="s2">20</span><span class="s1">.dp)) {</span>
+            <span class="s1">Row(</span>
+                <span class="s1">modifier = Modifier.fillMaxWidth()</span><span class="s3">,</span>
+                <span class="s1">horizontalArrangement = Arrangement.SpaceBetween</span><span class="s3">,</span>
+                <span class="s1">verticalAlignment = Alignment.CenterVertically</span>
+            <span class="s1">) {</span>
+                <span class="s1">Text(</span>
+                    <span class="s1">text = </span><span class="s5">&quot;Ingresos vs. Gastos&quot;</span><span class="s3">,</span>
+                    <span class="s1">fontSize = </span><span class="s2">16</span><span class="s1">.sp</span><span class="s3">,</span>
+                    <span class="s1">fontWeight = FontWeight.Bold</span><span class="s3">,</span>
+                    <span class="s1">color = MaterialTheme.colorScheme.onSurface</span>
+                <span class="s1">)</span>
+                <span class="s1">Surface(</span>
+                    <span class="s1">shape = RoundedCornerShape(</span><span class="s2">10</span><span class="s1">.dp)</span><span class="s3">,</span>
+                    <span class="s1">color = (</span><span class="s0">if </span><span class="s1">(savingsRate &gt;= </span><span class="s2">0</span><span class="s1">) EmeraldPrimary </span><span class="s0">else </span><span class="s1">ExpenseRed).copy(alpha = </span><span class="s2">0.16f</span><span class="s1">)</span>
+                <span class="s1">) {</span>
+                    <span class="s1">Text(</span>
+                        <span class="s1">text = </span><span class="s0">if </span><span class="s1">(totalIncome &gt; </span><span class="s2">0</span><span class="s1">) </span><span class="s5">&quot;Ahorro: </span><span class="s6">$</span><span class="s1">savingsRate</span><span class="s5">%&quot; </span><span class="s0">else </span><span class="s5">&quot;Sin ingresos&quot;</span><span class="s3">,</span>
+                        <span class="s1">fontSize = </span><span class="s2">12</span><span class="s1">.sp</span><span class="s3">,</span>
+                        <span class="s1">fontWeight = FontWeight.SemiBold</span><span class="s3">,</span>
+                        <span class="s1">color = </span><span class="s0">if </span><span class="s1">(savingsRate &gt;= </span><span class="s2">0</span><span class="s1">) EmeraldPrimary </span><span class="s0">else </span><span class="s1">ExpenseRed</span><span class="s3">,</span>
+                        <span class="s1">modifier = Modifier.padding(horizontal = </span><span class="s2">10</span><span class="s1">.dp</span><span class="s3">, </span><span class="s1">vertical = </span><span class="s2">4</span><span class="s1">.dp)</span>
+                    <span class="s1">)</span>
+                <span class="s1">}</span>
+            <span class="s1">}</span>
+
+            <span class="s1">Spacer(modifier = Modifier.height(</span><span class="s2">20</span><span class="s1">.dp))</span>
+
+            <span class="s1">Row(</span>
+                <span class="s1">modifier = Modifier</span>
+                    <span class="s1">.fillMaxWidth()</span>
+                    <span class="s1">.height(</span><span class="s2">170</span><span class="s1">.dp)</span><span class="s3">,</span>
+                <span class="s1">horizontalArrangement = Arrangement.SpaceEvenly</span><span class="s3">,</span>
+                <span class="s1">verticalAlignment = Alignment.Bottom</span>
+            <span class="s1">) {</span>
+                <span class="s1">ComparisonBarColumn(</span>
+                    <span class="s1">label = </span><span class="s5">&quot;Ingresos&quot;</span><span class="s3">,</span>
+                    <span class="s1">amount = totalIncome</span><span class="s3">,</span>
+                    <span class="s1">fillRatio = incomeRatio</span><span class="s3">,</span>
+                    <span class="s1">barColor = EmeraldPrimary</span><span class="s3">,</span>
+                    <span class="s1">modifier = Modifier.weight(</span><span class="s2">1f</span><span class="s1">)</span>
+                <span class="s1">)</span>
+                <span class="s1">Spacer(modifier = Modifier.width(</span><span class="s2">24</span><span class="s1">.dp))</span>
+                <span class="s1">ComparisonBarColumn(</span>
+                    <span class="s1">label = </span><span class="s5">&quot;Gastos&quot;</span><span class="s3">,</span>
+                    <span class="s1">amount = totalExpense</span><span class="s3">,</span>
+                    <span class="s1">fillRatio = expenseRatio</span><span class="s3">,</span>
+                    <span class="s1">barColor = ExpenseRed</span><span class="s3">,</span>
+                    <span class="s1">modifier = Modifier.weight(</span><span class="s2">1f</span><span class="s1">)</span>
+                <span class="s1">)</span>
+            <span class="s1">}</span>
+        <span class="s1">}</span>
+    <span class="s1">}</span>
+<span class="s1">}</span>
+
+<span class="s1">@Composable</span>
+<span class="s0">fun </span><span class="s1">ComparisonBarColumn(</span>
+    <span class="s1">label: String</span><span class="s3">,</span>
+    <span class="s1">amount: Double</span><span class="s3">,</span>
+    <span class="s1">fillRatio: Float</span><span class="s3">,</span>
+    <span class="s1">barColor: Color</span><span class="s3">,</span>
+    <span class="s1">modifier: Modifier = Modifier</span>
+<span class="s1">) {</span>
+    <span class="s1">Column(</span>
+        <span class="s1">modifier = modifier.fillMaxHeight()</span><span class="s3">,</span>
+        <span class="s1">horizontalAlignment = Alignment.CenterHorizontally</span><span class="s3">,</span>
+        <span class="s1">verticalArrangement = Arrangement.Bottom</span>
+    <span class="s1">) {</span>
+        <span class="s1">Text(</span>
+            <span class="s1">text = formatCurrency(amount)</span><span class="s3">,</span>
+            <span class="s1">fontSize = </span><span class="s2">13</span><span class="s1">.sp</span><span class="s3">,</span>
+            <span class="s1">fontWeight = FontWeight.Bold</span><span class="s3">,</span>
+            <span class="s1">color = barColor</span>
+        <span class="s1">)</span>
+        <span class="s1">Spacer(modifier = Modifier.height(</span><span class="s2">8</span><span class="s1">.dp))</span>
+        <span class="s1">Box(</span>
+            <span class="s1">modifier = Modifier</span>
+                <span class="s1">.width(</span><span class="s2">56</span><span class="s1">.dp)</span>
+                <span class="s1">.weight(</span><span class="s2">1f</span><span class="s1">)</span>
+                <span class="s1">.clip(RoundedCornerShape(</span><span class="s2">14</span><span class="s1">.dp))</span>
+                <span class="s1">.background(MaterialTheme.colorScheme.surfaceVariant)</span><span class="s3">,</span>
+            <span class="s1">contentAlignment = Alignment.BottomCenter</span>
+        <span class="s1">) {</span>
+            <span class="s1">Box(</span>
+                <span class="s1">modifier = Modifier</span>
+                    <span class="s1">.fillMaxWidth()</span>
+                    <span class="s1">.fillMaxHeight(fraction = </span><span class="s0">if </span><span class="s1">(amount &gt; </span><span class="s2">0</span><span class="s1">) fillRatio.coerceAtLeast(</span><span class="s2">0.06f</span><span class="s1">) </span><span class="s0">else </span><span class="s2">0f</span><span class="s1">)</span>
+                    <span class="s1">.clip(RoundedCornerShape(</span><span class="s2">14</span><span class="s1">.dp))</span>
+                    <span class="s1">.background(barColor)</span>
+            <span class="s1">)</span>
+        <span class="s1">}</span>
+        <span class="s1">Spacer(modifier = Modifier.height(</span><span class="s2">8</span><span class="s1">.dp))</span>
+        <span class="s1">Text(</span>
+            <span class="s1">text = label</span><span class="s3">,</span>
+            <span class="s1">fontSize = </span><span class="s2">13</span><span class="s1">.sp</span><span class="s3">,</span>
+            <span class="s1">fontWeight = FontWeight.Medium</span><span class="s3">,</span>
+            <span class="s1">color = MaterialTheme.colorScheme.onSurfaceVariant</span>
+        <span class="s1">)</span>
+    <span class="s1">}</span>
+<span class="s1">}</span>
+
+<span class="s1">@Composable</span>
+<span class="s0">fun </span><span class="s1">ExpensesByCategoryCard(</span>
+    <span class="s1">expensesByCategory: List&lt;Pair&lt;TransactionCategory</span><span class="s3">, </span><span class="s1">Double&gt;&gt;</span><span class="s3">,</span>
+    <span class="s1">totalExpense: Double</span>
+<span class="s1">) {</span>
+    <span class="s1">Card(</span>
+        <span class="s1">modifier = Modifier.fillMaxWidth()</span><span class="s3">,</span>
+        <span class="s1">shape = RoundedCornerShape(</span><span class="s2">24</span><span class="s1">.dp)</span><span class="s3">,</span>
+        <span class="s1">colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)</span>
+    <span class="s1">) {</span>
+        <span class="s1">Column(modifier = Modifier.padding(</span><span class="s2">20</span><span class="s1">.dp)) {</span>
+            <span class="s1">Text(</span>
+                <span class="s1">text = </span><span class="s5">&quot;Gastos por categoría&quot;</span><span class="s3">,</span>
+                <span class="s1">fontSize = </span><span class="s2">16</span><span class="s1">.sp</span><span class="s3">,</span>
+                <span class="s1">fontWeight = FontWeight.Bold</span><span class="s3">,</span>
+                <span class="s1">color = MaterialTheme.colorScheme.onSurface</span>
+            <span class="s1">)</span>
+
+            <span class="s1">Spacer(modifier = Modifier.height(</span><span class="s2">16</span><span class="s1">.dp))</span>
+
+            <span class="s0">if </span><span class="s1">(expensesByCategory.isEmpty() || totalExpense &lt;= </span><span class="s2">0.0</span><span class="s1">) {</span>
+                <span class="s1">Box(</span>
+                    <span class="s1">modifier = Modifier</span>
+                        <span class="s1">.fillMaxWidth()</span>
+                        <span class="s1">.padding(vertical = </span><span class="s2">28</span><span class="s1">.dp)</span><span class="s3">,</span>
+                    <span class="s1">contentAlignment = Alignment.Center</span>
+                <span class="s1">) {</span>
+                    <span class="s1">Text(</span>
+                        <span class="s1">text = </span><span class="s5">&quot;Registra algún gasto para ver la distribución por categorías&quot;</span><span class="s3">,</span>
+                        <span class="s1">fontSize = </span><span class="s2">13</span><span class="s1">.sp</span><span class="s3">,</span>
+                        <span class="s1">color = MaterialTheme.colorScheme.onSurfaceVariant</span>
+                    <span class="s1">)</span>
+                <span class="s1">}</span>
+            <span class="s1">} </span><span class="s0">else </span><span class="s1">{</span>
+                <span class="s1">Box(</span>
+                    <span class="s1">modifier = Modifier</span>
+                        <span class="s1">.fillMaxWidth()</span>
+                        <span class="s1">.height(</span><span class="s2">190</span><span class="s1">.dp)</span><span class="s3">,</span>
+                    <span class="s1">contentAlignment = Alignment.Center</span>
+                <span class="s1">) {</span>
+                    <span class="s1">DonutChart(</span>
+                        <span class="s1">slices = expensesByCategory.map { (cat</span><span class="s3">, </span><span class="s1">amount) -&gt;</span>
+                            <span class="s1">cat.chartColor to (amount / totalExpense).toFloat()</span>
+                        <span class="s1">}</span><span class="s3">,</span>
+                        <span class="s1">modifier = Modifier.size(</span><span class="s2">165</span><span class="s1">.dp)</span>
+                    <span class="s1">)</span>
+                    <span class="s1">Column(horizontalAlignment = Alignment.CenterHorizontally) {</span>
+                        <span class="s1">Text(</span>
+                            <span class="s1">text = </span><span class="s5">&quot;Total gastado&quot;</span><span class="s3">,</span>
+                            <span class="s1">fontSize = </span><span class="s2">11</span><span class="s1">.sp</span><span class="s3">,</span>
+                            <span class="s1">color = MaterialTheme.colorScheme.onSurfaceVariant</span>
+                        <span class="s1">)</span>
+                        <span class="s1">Text(</span>
+                            <span class="s1">text = formatCurrency(totalExpense)</span><span class="s3">,</span>
+                            <span class="s1">fontSize = </span><span class="s2">16</span><span class="s1">.sp</span><span class="s3">,</span>
+                            <span class="s1">fontWeight = FontWeight.ExtraBold</span><span class="s3">,</span>
+                            <span class="s1">color = MaterialTheme.colorScheme.onSurface</span>
+                        <span class="s1">)</span>
+                    <span class="s1">}</span>
+                <span class="s1">}</span>
+
+                <span class="s1">Spacer(modifier = Modifier.height(</span><span class="s2">20</span><span class="s1">.dp))</span>
+
+                <span class="s1">Column(verticalArrangement = Arrangement.spacedBy(</span><span class="s2">12</span><span class="s1">.dp)) {</span>
+                    <span class="s1">expensesByCategory.forEach { (category</span><span class="s3">, </span><span class="s1">amount) -&gt;</span>
+                        <span class="s0">val </span><span class="s1">percentage = (amount / totalExpense).toFloat().coerceIn(</span><span class="s2">0f</span><span class="s3">, </span><span class="s2">1f</span><span class="s1">)</span>
+                        <span class="s1">CategoryBreakdownRow(</span>
+                            <span class="s1">category = category</span><span class="s3">,</span>
+                            <span class="s1">amount = amount</span><span class="s3">,</span>
+                            <span class="s1">percentage = percentage</span>
+                        <span class="s1">)</span>
+                    <span class="s1">}</span>
+                <span class="s1">}</span>
+            <span class="s1">}</span>
+        <span class="s1">}</span>
+    <span class="s1">}</span>
+<span class="s1">}</span>
+
+<span class="s1">@Composable</span>
+<span class="s0">fun </span><span class="s1">DonutChart(</span>
+    <span class="s1">slices: List&lt;Pair&lt;Color</span><span class="s3">, </span><span class="s1">Float&gt;&gt;</span><span class="s3">,</span>
+    <span class="s1">modifier: Modifier = Modifier</span>
+<span class="s1">) {</span>
+    <span class="s0">val </span><span class="s1">trackColor = MaterialTheme.colorScheme.surfaceVariant</span>
+    <span class="s1">Canvas(modifier = modifier) {</span>
+        <span class="s0">val </span><span class="s1">strokeWidth = </span><span class="s2">24</span><span class="s1">.dp.toPx()</span>
+        <span class="s0">val </span><span class="s1">diameter = size.minDimension - strokeWidth</span>
+        <span class="s0">val </span><span class="s1">topLeft = Offset(strokeWidth / </span><span class="s2">2f</span><span class="s3">, </span><span class="s1">strokeWidth / </span><span class="s2">2f</span><span class="s1">)</span>
+        <span class="s0">val </span><span class="s1">arcSize = Size(diameter</span><span class="s3">, </span><span class="s1">diameter)</span>
+
+        <span class="s1">drawArc(</span>
+            <span class="s1">color = trackColor</span><span class="s3">,</span>
+            <span class="s1">startAngle = </span><span class="s2">0f</span><span class="s3">,</span>
+            <span class="s1">sweepAngle = </span><span class="s2">360f</span><span class="s3">,</span>
+            <span class="s1">useCenter = </span><span class="s0">false</span><span class="s3">,</span>
+            <span class="s1">topLeft = topLeft</span><span class="s3">,</span>
+            <span class="s1">size = arcSize</span><span class="s3">,</span>
+            <span class="s1">style = Stroke(width = strokeWidth)</span>
+        <span class="s1">)</span>
+
+        <span class="s0">var </span><span class="s1">startAngle = -</span><span class="s2">90f</span>
+        <span class="s0">val </span><span class="s1">gapDegrees = </span><span class="s0">if </span><span class="s1">(slices.size &gt; </span><span class="s2">1</span><span class="s1">) </span><span class="s2">3f </span><span class="s0">else </span><span class="s2">0f</span>
+
+        <span class="s1">slices.forEach { (color</span><span class="s3">, </span><span class="s1">fraction) -&gt;</span>
+            <span class="s0">val </span><span class="s1">sweepAngle = (fraction * </span><span class="s2">360f</span><span class="s1">) - gapDegrees</span>
+            <span class="s0">if </span><span class="s1">(sweepAngle &gt; </span><span class="s2">0f</span><span class="s1">) {</span>
+                <span class="s1">drawArc(</span>
+                    <span class="s1">color = color</span><span class="s3">,</span>
+                    <span class="s1">startAngle = startAngle + (gapDegrees / </span><span class="s2">2f</span><span class="s1">)</span><span class="s3">,</span>
+                    <span class="s1">sweepAngle = sweepAngle</span><span class="s3">,</span>
+                    <span class="s1">useCenter = </span><span class="s0">false</span><span class="s3">,</span>
+                    <span class="s1">topLeft = topLeft</span><span class="s3">,</span>
+                    <span class="s1">size = arcSize</span><span class="s3">,</span>
+                    <span class="s1">style = Stroke(width = strokeWidth</span><span class="s3">, </span><span class="s1">cap = StrokeCap.Butt)</span>
+                <span class="s1">)</span>
+            <span class="s1">}</span>
+            <span class="s1">startAngle += fraction * </span><span class="s2">360f</span>
+        <span class="s1">}</span>
+    <span class="s1">}</span>
+<span class="s1">}</span>
+
+<span class="s1">@Composable</span>
+<span class="s0">fun </span><span class="s1">CategoryBreakdownRow(</span>
+    <span class="s1">category: TransactionCategory</span><span class="s3">,</span>
+    <span class="s1">amount: Double</span><span class="s3">,</span>
+    <span class="s1">percentage: Float</span>
+<span class="s1">) {</span>
+    <span class="s0">val </span><span class="s1">animatedProgress by animateFloatAsState(</span>
+        <span class="s1">targetValue = percentage</span><span class="s3">,</span>
+        <span class="s1">animationSpec = tween(durationMillis = </span><span class="s2">500</span><span class="s1">)</span><span class="s3">,</span>
+        <span class="s1">label = </span><span class="s5">&quot;catProgress&quot;</span>
+    <span class="s1">)</span>
+
+    <span class="s1">Column(verticalArrangement = Arrangement.spacedBy(</span><span class="s2">6</span><span class="s1">.dp)) {</span>
+        <span class="s1">Row(</span>
+            <span class="s1">modifier = Modifier.fillMaxWidth()</span><span class="s3">,</span>
+            <span class="s1">verticalAlignment = Alignment.CenterVertically</span>
+        <span class="s1">) {</span>
+            <span class="s1">Box(</span>
+                <span class="s1">modifier = Modifier</span>
+                    <span class="s1">.size(</span><span class="s2">30</span><span class="s1">.dp)</span>
+                    <span class="s1">.clip(RoundedCornerShape(</span><span class="s2">8</span><span class="s1">.dp))</span>
+                    <span class="s1">.background(category.chartColor.copy(alpha = </span><span class="s2">0.18f</span><span class="s1">))</span><span class="s3">,</span>
+                <span class="s1">contentAlignment = Alignment.Center</span>
+            <span class="s1">) {</span>
+                <span class="s1">Icon(</span>
+                    <span class="s1">imageVector = category.icon</span><span class="s3">,</span>
+                    <span class="s1">contentDescription = </span><span class="s0">null</span><span class="s3">,</span>
+                    <span class="s1">tint = category.chartColor</span><span class="s3">,</span>
+                    <span class="s1">modifier = Modifier.size(</span><span class="s2">16</span><span class="s1">.dp)</span>
+                <span class="s1">)</span>
+            <span class="s1">}</span>
+            <span class="s1">Spacer(modifier = Modifier.width(</span><span class="s2">10</span><span class="s1">.dp))</span>
+            <span class="s1">Text(</span>
+                <span class="s1">text = category.displayName</span><span class="s3">,</span>
+                <span class="s1">fontSize = </span><span class="s2">14</span><span class="s1">.sp</span><span class="s3">,</span>
+                <span class="s1">fontWeight = FontWeight.Medium</span><span class="s3">,</span>
+                <span class="s1">color = MaterialTheme.colorScheme.onSurface</span><span class="s3">,</span>
+                <span class="s1">modifier = Modifier.weight(</span><span class="s2">1f</span><span class="s1">)</span>
+            <span class="s1">)</span>
+            <span class="s1">Text(</span>
+                <span class="s1">text = </span><span class="s5">&quot;</span><span class="s6">${</span><span class="s1">(percentage * </span><span class="s2">100</span><span class="s1">).toInt()</span><span class="s6">}</span><span class="s5">%&quot;</span><span class="s3">,</span>
+                <span class="s1">fontSize = </span><span class="s2">12</span><span class="s1">.sp</span><span class="s3">,</span>
+                <span class="s1">color = MaterialTheme.colorScheme.onSurfaceVariant</span><span class="s3">,</span>
+                <span class="s1">modifier = Modifier.padding(end = </span><span class="s2">8</span><span class="s1">.dp)</span>
+            <span class="s1">)</span>
+            <span class="s1">Text(</span>
+                <span class="s1">text = formatCurrency(amount)</span><span class="s3">,</span>
+                <span class="s1">fontSize = </span><span class="s2">14</span><span class="s1">.sp</span><span class="s3">,</span>
+                <span class="s1">fontWeight = FontWeight.Bold</span><span class="s3">,</span>
+                <span class="s1">color = MaterialTheme.colorScheme.onSurface</span>
+            <span class="s1">)</span>
+        <span class="s1">}</span>
+
+        <span class="s1">LinearProgressIndicator(</span>
+            <span class="s1">progress = { animatedProgress }</span><span class="s3">,</span>
+            <span class="s1">modifier = Modifier</span>
+                <span class="s1">.fillMaxWidth()</span>
+                <span class="s1">.height(</span><span class="s2">6</span><span class="s1">.dp)</span>
+                <span class="s1">.clip(CircleShape)</span><span class="s3">,</span>
+            <span class="s1">color = category.chartColor</span><span class="s3">,</span>
+            <span class="s1">trackColor = MaterialTheme.colorScheme.surfaceVariant</span>
+        <span class="s1">)</span>
+    <span class="s1">}</span>
+<span class="s1">}</span>
+
+<span class="s4">// ==========================================</span>
+<span class="s4">// COMPONENTES COMPARTIDOS</span>
+<span class="s4">// ==========================================</span>
+<span class="s1">@Composable</span>
+<span class="s0">fun </span><span class="s1">MainBalanceCard(</span>
+    <span class="s1">availableBalance: Double</span><span class="s3">,</span>
+    <span class="s1">totalIncome: Double</span><span class="s3">,</span>
+    <span class="s1">totalExpense: Double</span>
+<span class="s1">) {</span>
+    <span class="s1">Card(</span>
+        <span class="s1">modifier = Modifier.fillMaxWidth()</span><span class="s3">,</span>
+        <span class="s1">shape = RoundedCornerShape(</span><span class="s2">24</span><span class="s1">.dp)</span><span class="s3">,</span>
+        <span class="s1">colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)</span><span class="s3">,</span>
+        <span class="s1">border = BorderStroke(</span><span class="s2">1</span><span class="s1">.dp</span><span class="s3">, </span><span class="s1">EmeraldPrimary.copy(alpha = </span><span class="s2">0.25f</span><span class="s1">))</span>
+    <span class="s1">) {</span>
+        <span class="s1">Column(modifier = Modifier.padding(</span><span class="s2">20</span><span class="s1">.dp)) {</span>
+            <span class="s1">Text(</span>
+                <span class="s1">text = </span><span class="s5">&quot;Dinero disponible&quot;</span><span class="s3">,</span>
+                <span class="s1">fontSize = </span><span class="s2">14</span><span class="s1">.sp</span><span class="s3">,</span>
+                <span class="s1">color = MaterialTheme.colorScheme.onSurfaceVariant</span>
+            <span class="s1">)</span>
+            <span class="s1">Spacer(modifier = Modifier.height(</span><span class="s2">4</span><span class="s1">.dp))</span>
+            <span class="s1">Text(</span>
+                <span class="s1">text = formatCurrency(availableBalance)</span><span class="s3">,</span>
+                <span class="s1">fontSize = </span><span class="s2">36</span><span class="s1">.sp</span><span class="s3">,</span>
+                <span class="s1">fontWeight = FontWeight.ExtraBold</span><span class="s3">,</span>
+                <span class="s1">color = </span><span class="s0">if </span><span class="s1">(availableBalance &gt;= </span><span class="s2">0</span><span class="s1">) EmeraldPrimary </span><span class="s0">else </span><span class="s1">ExpenseRed</span>
+            <span class="s1">)</span>
+
+            <span class="s1">Spacer(modifier = Modifier.height(</span><span class="s2">20</span><span class="s1">.dp))</span>
+
+            <span class="s1">Row(</span>
+                <span class="s1">modifier = Modifier.fillMaxWidth()</span><span class="s3">,</span>
+                <span class="s1">horizontalArrangement = Arrangement.spacedBy(</span><span class="s2">12</span><span class="s1">.dp)</span>
+            <span class="s1">) {</span>
+                <span class="s1">MetricSubCard(</span>
+                    <span class="s1">title = </span><span class="s5">&quot;Total ingresos&quot;</span><span class="s3">,</span>
+                    <span class="s1">amount = totalIncome</span><span class="s3">,</span>
+                    <span class="s1">accentColor = EmeraldPrimary</span><span class="s3">,</span>
+                    <span class="s1">icon = Icons.Rounded.ArrowUpward</span><span class="s3">,</span>
+                    <span class="s1">modifier = Modifier.weight(</span><span class="s2">1f</span><span class="s1">)</span>
+                <span class="s1">)</span>
+                <span class="s1">MetricSubCard(</span>
+                    <span class="s1">title = </span><span class="s5">&quot;Total gastos&quot;</span><span class="s3">,</span>
+                    <span class="s1">amount = totalExpense</span><span class="s3">,</span>
+                    <span class="s1">accentColor = ExpenseRed</span><span class="s3">,</span>
+                    <span class="s1">icon = Icons.Rounded.ArrowDownward</span><span class="s3">,</span>
+                    <span class="s1">modifier = Modifier.weight(</span><span class="s2">1f</span><span class="s1">)</span>
+                <span class="s1">)</span>
+            <span class="s1">}</span>
+        <span class="s1">}</span>
+    <span class="s1">}</span>
+<span class="s1">}</span>
+
+<span class="s1">@Composable</span>
+<span class="s0">fun </span><span class="s1">MetricSubCard(</span>
+    <span class="s1">title: String</span><span class="s3">,</span>
+    <span class="s1">amount: Double</span><span class="s3">,</span>
+    <span class="s1">accentColor: Color</span><span class="s3">,</span>
+    <span class="s1">icon: ImageVector</span><span class="s3">,</span>
+    <span class="s1">modifier: Modifier = Modifier</span>
+<span class="s1">) {</span>
+    <span class="s1">Surface(</span>
+        <span class="s1">modifier = modifier</span><span class="s3">,</span>
+        <span class="s1">shape = RoundedCornerShape(</span><span class="s2">16</span><span class="s1">.dp)</span><span class="s3">,</span>
+        <span class="s1">color = MaterialTheme.colorScheme.surfaceVariant</span>
+    <span class="s1">) {</span>
+        <span class="s1">Column(modifier = Modifier.padding(</span><span class="s2">14</span><span class="s1">.dp)) {</span>
+            <span class="s1">Row(verticalAlignment = Alignment.CenterVertically) {</span>
+                <span class="s1">Box(</span>
+                    <span class="s1">modifier = Modifier</span>
+                        <span class="s1">.size(</span><span class="s2">24</span><span class="s1">.dp)</span>
+                        <span class="s1">.clip(CircleShape)</span>
+                        <span class="s1">.background(accentColor.copy(alpha = </span><span class="s2">0.18f</span><span class="s1">))</span><span class="s3">,</span>
+                    <span class="s1">contentAlignment = Alignment.Center</span>
+                <span class="s1">) {</span>
+                    <span class="s1">Icon(</span>
+                        <span class="s1">imageVector = icon</span><span class="s3">,</span>
+                        <span class="s1">contentDescription = </span><span class="s0">null</span><span class="s3">,</span>
+                        <span class="s1">tint = accentColor</span><span class="s3">,</span>
+                        <span class="s1">modifier = Modifier.size(</span><span class="s2">14</span><span class="s1">.dp)</span>
+                    <span class="s1">)</span>
+                <span class="s1">}</span>
+                <span class="s1">Spacer(modifier = Modifier.width(</span><span class="s2">8</span><span class="s1">.dp))</span>
+                <span class="s1">Text(</span>
+                    <span class="s1">text = title</span><span class="s3">,</span>
+                    <span class="s1">fontSize = </span><span class="s2">12</span><span class="s1">.sp</span><span class="s3">,</span>
+                    <span class="s1">color = MaterialTheme.colorScheme.onSurfaceVariant</span>
+                <span class="s1">)</span>
+            <span class="s1">}</span>
+            <span class="s1">Spacer(modifier = Modifier.height(</span><span class="s2">8</span><span class="s1">.dp))</span>
+            <span class="s1">Text(</span>
+                <span class="s1">text = formatCurrency(amount)</span><span class="s3">,</span>
+                <span class="s1">fontSize = </span><span class="s2">16</span><span class="s1">.sp</span><span class="s3">,</span>
+                <span class="s1">fontWeight = FontWeight.Bold</span><span class="s3">,</span>
+                <span class="s1">color = MaterialTheme.colorScheme.onSurface</span>
+            <span class="s1">)</span>
+        <span class="s1">}</span>
+    <span class="s1">}</span>
+<span class="s1">}</span>
+
+<span class="s1">@Composable</span>
+<span class="s0">fun </span><span class="s1">QuickActionButtons(</span>
+    <span class="s1">onAddIncomeClick: () -&gt; Unit</span><span class="s3">,</span>
+    <span class="s1">onAddExpenseClick: () -&gt; Unit</span>
+<span class="s1">) {</span>
+    <span class="s1">Row(</span>
+        <span class="s1">modifier = Modifier.fillMaxWidth()</span><span class="s3">,</span>
+        <span class="s1">horizontalArrangement = Arrangement.spacedBy(</span><span class="s2">12</span><span class="s1">.dp)</span>
+    <span class="s1">) {</span>
+        <span class="s1">Button(</span>
+            <span class="s1">onClick = onAddIncomeClick</span><span class="s3">,</span>
+            <span class="s1">modifier = Modifier</span>
+                <span class="s1">.weight(</span><span class="s2">1f</span><span class="s1">)</span>
+                <span class="s1">.height(</span><span class="s2">52</span><span class="s1">.dp)</span><span class="s3">,</span>
+            <span class="s1">shape = RoundedCornerShape(</span><span class="s2">16</span><span class="s1">.dp)</span><span class="s3">,</span>
+            <span class="s1">colors = ButtonDefaults.buttonColors(</span>
+                <span class="s1">containerColor = EmeraldPrimary</span><span class="s3">,</span>
+                <span class="s1">contentColor = DarkBackground</span>
+            <span class="s1">)</span>
+        <span class="s1">) {</span>
+            <span class="s1">Icon(Icons.Rounded.Add</span><span class="s3">, </span><span class="s1">contentDescription = </span><span class="s0">null</span><span class="s3">, </span><span class="s1">modifier = Modifier.size(</span><span class="s2">20</span><span class="s1">.dp))</span>
+            <span class="s1">Spacer(modifier = Modifier.width(</span><span class="s2">6</span><span class="s1">.dp))</span>
+            <span class="s1">Text(text = </span><span class="s5">&quot;Ingreso&quot;</span><span class="s3">, </span><span class="s1">fontWeight = FontWeight.Bold</span><span class="s3">, </span><span class="s1">fontSize = </span><span class="s2">15</span><span class="s1">.sp)</span>
+        <span class="s1">}</span>
+
+        <span class="s1">OutlinedButton(</span>
+            <span class="s1">onClick = onAddExpenseClick</span><span class="s3">,</span>
+            <span class="s1">modifier = Modifier</span>
+                <span class="s1">.weight(</span><span class="s2">1f</span><span class="s1">)</span>
+                <span class="s1">.height(</span><span class="s2">52</span><span class="s1">.dp)</span><span class="s3">,</span>
+            <span class="s1">shape = RoundedCornerShape(</span><span class="s2">16</span><span class="s1">.dp)</span><span class="s3">,</span>
+            <span class="s1">border = BorderStroke(</span><span class="s2">1.5</span><span class="s1">.dp</span><span class="s3">, </span><span class="s1">ExpenseRed.copy(alpha = </span><span class="s2">0.6f</span><span class="s1">))</span><span class="s3">,</span>
+            <span class="s1">colors = ButtonDefaults.outlinedButtonColors(</span>
+                <span class="s1">containerColor = MaterialTheme.colorScheme.surface</span><span class="s3">,</span>
+                <span class="s1">contentColor = ExpenseRed</span>
+            <span class="s1">)</span>
+        <span class="s1">) {</span>
+            <span class="s1">Icon(Icons.Rounded.Remove</span><span class="s3">, </span><span class="s1">contentDescription = </span><span class="s0">null</span><span class="s3">, </span><span class="s1">modifier = Modifier.size(</span><span class="s2">20</span><span class="s1">.dp))</span>
+            <span class="s1">Spacer(modifier = Modifier.width(</span><span class="s2">6</span><span class="s1">.dp))</span>
+            <span class="s1">Text(text = </span><span class="s5">&quot;Gasto&quot;</span><span class="s3">, </span><span class="s1">fontWeight = FontWeight.Bold</span><span class="s3">, </span><span class="s1">fontSize = </span><span class="s2">15</span><span class="s1">.sp)</span>
+        <span class="s1">}</span>
+    <span class="s1">}</span>
+<span class="s1">}</span>
+
+<span class="s1">@Composable</span>
+<span class="s0">fun </span><span class="s1">MovementItemCard(</span>
+    <span class="s1">transaction: Transaction</span><span class="s3">,</span>
+    <span class="s1">onEdit: () -&gt; Unit</span><span class="s3">,</span>
+    <span class="s1">onDelete: () -&gt; Unit</span>
+<span class="s1">) {</span>
+    <span class="s0">val </span><span class="s1">isIncome = transaction.type == TransactionType.INCOME</span>
+    <span class="s0">val </span><span class="s1">accentColor = </span><span class="s0">if </span><span class="s1">(isIncome) EmeraldPrimary </span><span class="s0">else </span><span class="s1">ExpenseRed</span>
+    <span class="s0">val </span><span class="s1">sign = </span><span class="s0">if </span><span class="s1">(isIncome) </span><span class="s5">&quot;+&quot; </span><span class="s0">else </span><span class="s5">&quot;-&quot;</span>
+
+    <span class="s1">Card(</span>
+        <span class="s1">modifier = Modifier</span>
+            <span class="s1">.fillMaxWidth()</span>
+            <span class="s1">.clip(RoundedCornerShape(</span><span class="s2">18</span><span class="s1">.dp))</span>
+            <span class="s1">.clickable { onEdit() }</span><span class="s3">,</span>
+        <span class="s1">shape = RoundedCornerShape(</span><span class="s2">18</span><span class="s1">.dp)</span><span class="s3">,</span>
+        <span class="s1">colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)</span>
+    <span class="s1">) {</span>
+        <span class="s1">Row(</span>
+            <span class="s1">modifier = Modifier</span>
+                <span class="s1">.fillMaxWidth()</span>
+                <span class="s1">.padding(start = </span><span class="s2">14</span><span class="s1">.dp</span><span class="s3">, </span><span class="s1">end = </span><span class="s2">4</span><span class="s1">.dp</span><span class="s3">, </span><span class="s1">top = </span><span class="s2">12</span><span class="s1">.dp</span><span class="s3">, </span><span class="s1">bottom = </span><span class="s2">12</span><span class="s1">.dp)</span><span class="s3">,</span>
+            <span class="s1">verticalAlignment = Alignment.CenterVertically</span>
+        <span class="s1">) {</span>
+            <span class="s1">Box(</span>
+                <span class="s1">modifier = Modifier</span>
+                    <span class="s1">.size(</span><span class="s2">42</span><span class="s1">.dp)</span>
+                    <span class="s1">.clip(RoundedCornerShape(</span><span class="s2">12</span><span class="s1">.dp))</span>
+                    <span class="s1">.background(accentColor.copy(alpha = </span><span class="s2">0.14f</span><span class="s1">))</span><span class="s3">,</span>
+                <span class="s1">contentAlignment = Alignment.Center</span>
+            <span class="s1">) {</span>
+                <span class="s1">Icon(</span>
+                    <span class="s1">imageVector = transaction.category.icon</span><span class="s3">,</span>
+                    <span class="s1">contentDescription = transaction.category.displayName</span><span class="s3">,</span>
+                    <span class="s1">tint = accentColor</span><span class="s3">,</span>
+                    <span class="s1">modifier = Modifier.size(</span><span class="s2">20</span><span class="s1">.dp)</span>
+                <span class="s1">)</span>
+            <span class="s1">}</span>
+
+            <span class="s1">Spacer(modifier = Modifier.width(</span><span class="s2">12</span><span class="s1">.dp))</span>
+
+            <span class="s1">Column(modifier = Modifier.weight(</span><span class="s2">1f</span><span class="s1">)) {</span>
+                <span class="s1">Text(</span>
+                    <span class="s1">text = transaction.name</span><span class="s3">,</span>
+                    <span class="s1">fontSize = </span><span class="s2">15</span><span class="s1">.sp</span><span class="s3">,</span>
+                    <span class="s1">fontWeight = FontWeight.SemiBold</span><span class="s3">,</span>
+                    <span class="s1">color = MaterialTheme.colorScheme.onSurface</span>
+                <span class="s1">)</span>
+                <span class="s1">Spacer(modifier = Modifier.height(</span><span class="s2">2</span><span class="s1">.dp))</span>
+                <span class="s1">Text(</span>
+                    <span class="s1">text = </span><span class="s5">&quot;</span><span class="s6">${</span><span class="s1">transaction.category.displayName</span><span class="s6">} </span><span class="s5">• </span><span class="s6">${</span><span class="s1">formatDate(transaction.dateMillis)</span><span class="s6">}</span><span class="s5">&quot;</span><span class="s3">,</span>
+                    <span class="s1">fontSize = </span><span class="s2">12</span><span class="s1">.sp</span><span class="s3">,</span>
+                    <span class="s1">color = MaterialTheme.colorScheme.onSurfaceVariant</span>
+                <span class="s1">)</span>
+            <span class="s1">}</span>
+
+            <span class="s1">Text(</span>
+                <span class="s1">text = </span><span class="s5">&quot;</span><span class="s6">$</span><span class="s1">sign</span><span class="s6">${</span><span class="s1">formatCurrency(transaction.amount)</span><span class="s6">}</span><span class="s5">&quot;</span><span class="s3">,</span>
+                <span class="s1">fontSize = </span><span class="s2">15</span><span class="s1">.sp</span><span class="s3">,</span>
+                <span class="s1">fontWeight = FontWeight.Bold</span><span class="s3">,</span>
+                <span class="s1">color = accentColor</span>
+            <span class="s1">)</span>
+
+            <span class="s1">IconButton(onClick = onDelete) {</span>
+                <span class="s1">Icon(</span>
+                    <span class="s1">imageVector = Icons.Rounded.DeleteOutline</span><span class="s3">,</span>
+                    <span class="s1">contentDescription = </span><span class="s5">&quot;Eliminar movimiento&quot;</span><span class="s3">,</span>
+                    <span class="s1">tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = </span><span class="s2">0.75f</span><span class="s1">)</span><span class="s3">,</span>
+                    <span class="s1">modifier = Modifier.size(</span><span class="s2">20</span><span class="s1">.dp)</span>
+                <span class="s1">)</span>
+            <span class="s1">}</span>
+        <span class="s1">}</span>
+    <span class="s1">}</span>
+<span class="s1">}</span>
+
+<span class="s1">@Composable</span>
+<span class="s0">fun </span><span class="s1">EmptyTransactionsCard(message: String) {</span>
+    <span class="s1">Card(</span>
+        <span class="s1">modifier = Modifier.fillMaxWidth()</span><span class="s3">,</span>
+        <span class="s1">shape = RoundedCornerShape(</span><span class="s2">18</span><span class="s1">.dp)</span><span class="s3">,</span>
+        <span class="s1">colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)</span>
+    <span class="s1">) {</span>
+        <span class="s1">Box(</span>
+            <span class="s1">modifier = Modifier</span>
+                <span class="s1">.fillMaxWidth()</span>
+                <span class="s1">.padding(</span><span class="s2">32</span><span class="s1">.dp)</span><span class="s3">,</span>
+            <span class="s1">contentAlignment = Alignment.Center</span>
+        <span class="s1">) {</span>
+            <span class="s1">Text(</span>
+                <span class="s1">text = message</span><span class="s3">,</span>
+                <span class="s1">color = MaterialTheme.colorScheme.onSurfaceVariant</span><span class="s3">,</span>
+                <span class="s1">fontSize = </span><span class="s2">14</span><span class="s1">.sp</span>
+            <span class="s1">)</span>
+        <span class="s1">}</span>
+    <span class="s1">}</span>
+<span class="s1">}</span>
+
+<span class="s1">@OptIn(ExperimentalMaterial3Api::</span><span class="s0">class</span><span class="s3">, </span><span class="s1">ExperimentalLayoutApi::</span><span class="s0">class</span><span class="s1">)</span>
+<span class="s1">@Composable</span>
+<span class="s0">fun </span><span class="s1">TransactionFormDialog(</span>
+    <span class="s1">mode: FormMode</span><span class="s3">,</span>
+    <span class="s1">onDismiss: () -&gt; Unit</span><span class="s3">,</span>
+    <span class="s1">onSave: (Transaction) -&gt; Unit</span>
+<span class="s1">) {</span>
+    <span class="s0">val </span><span class="s1">existing = (mode </span><span class="s0">as? </span><span class="s1">FormMode.Edit)?.transaction</span>
+    <span class="s0">val </span><span class="s1">initialType = existing?.type ?: (mode </span><span class="s0">as </span><span class="s1">FormMode.Create).defaultType</span>
+
+    <span class="s0">var </span><span class="s1">type by remember { mutableStateOf(initialType) }</span>
+    <span class="s0">var </span><span class="s1">name by remember { mutableStateOf(existing?.name ?: </span><span class="s5">&quot;&quot;</span><span class="s1">) }</span>
+    <span class="s0">var </span><span class="s1">amountText by remember {</span>
+        <span class="s1">mutableStateOf(existing?.amount?.let { String.format(Locale.US</span><span class="s3">, </span><span class="s5">&quot;%.2f&quot;</span><span class="s3">, </span><span class="s1">it) } ?: </span><span class="s5">&quot;&quot;</span><span class="s1">)</span>
+    <span class="s1">}</span>
+    <span class="s0">var </span><span class="s1">selectedCategory by remember {</span>
+        <span class="s1">mutableStateOf(existing?.category ?: TransactionCategory.defaultFor(initialType))</span>
+    <span class="s1">}</span>
+    <span class="s0">var </span><span class="s1">dateMillis by remember { mutableStateOf(existing?.dateMillis ?: System.currentTimeMillis()) }</span>
+    <span class="s0">var </span><span class="s1">showDatePicker by remember { mutableStateOf(</span><span class="s0">false</span><span class="s1">) }</span>
+
+    <span class="s0">val </span><span class="s1">isIncome = type == TransactionType.INCOME</span>
+    <span class="s0">val </span><span class="s1">accentColor = </span><span class="s0">if </span><span class="s1">(isIncome) EmeraldPrimary </span><span class="s0">else </span><span class="s1">ExpenseRed</span>
+    <span class="s0">val </span><span class="s1">availableCategories = remember(type) { TransactionCategory.forType(type) }</span>
+
+    <span class="s1">AlertDialog(</span>
+        <span class="s1">onDismissRequest = onDismiss</span><span class="s3">,</span>
+        <span class="s1">containerColor = MaterialTheme.colorScheme.surface</span><span class="s3">,</span>
+        <span class="s1">shape = RoundedCornerShape(</span><span class="s2">24</span><span class="s1">.dp)</span><span class="s3">,</span>
+        <span class="s1">title = {</span>
+            <span class="s1">Text(</span>
+                <span class="s1">text = </span><span class="s0">if </span><span class="s1">(existing != </span><span class="s0">null</span><span class="s1">) </span><span class="s5">&quot;Editar movimiento&quot; </span><span class="s0">else </span><span class="s5">&quot;Nuevo movimiento&quot;</span><span class="s3">,</span>
+                <span class="s1">fontWeight = FontWeight.Bold</span><span class="s3">,</span>
+                <span class="s1">color = MaterialTheme.colorScheme.onSurface</span>
+            <span class="s1">)</span>
+        <span class="s1">}</span><span class="s3">,</span>
+        <span class="s1">text = {</span>
+            <span class="s1">Column(verticalArrangement = Arrangement.spacedBy(</span><span class="s2">12</span><span class="s1">.dp)) {</span>
+                <span class="s1">Row(</span>
+                    <span class="s1">modifier = Modifier.fillMaxWidth()</span><span class="s3">,</span>
+                    <span class="s1">horizontalArrangement = Arrangement.spacedBy(</span><span class="s2">8</span><span class="s1">.dp)</span>
+                <span class="s1">) {</span>
+                    <span class="s1">FilterChip(</span>
+                        <span class="s1">selected = isIncome</span><span class="s3">,</span>
+                        <span class="s1">onClick = {</span>
+                            <span class="s0">if </span><span class="s1">(type != TransactionType.INCOME) {</span>
+                                <span class="s1">type = TransactionType.INCOME</span>
+                                <span class="s1">selectedCategory = TransactionCategory.defaultFor(TransactionType.INCOME)</span>
+                            <span class="s1">}</span>
+                        <span class="s1">}</span><span class="s3">,</span>
+                        <span class="s1">label = {</span>
+                            <span class="s1">Box(Modifier.fillMaxWidth()</span><span class="s3">, </span><span class="s1">contentAlignment = Alignment.Center) {</span>
+                                <span class="s1">Text(</span><span class="s5">&quot;Ingreso&quot;</span><span class="s3">, </span><span class="s1">fontWeight = FontWeight.SemiBold)</span>
+                            <span class="s1">}</span>
+                        <span class="s1">}</span><span class="s3">,</span>
+                        <span class="s1">colors = FilterChipDefaults.filterChipColors(</span>
+                            <span class="s1">selectedContainerColor = EmeraldPrimary.copy(alpha = </span><span class="s2">0.2f</span><span class="s1">)</span><span class="s3">,</span>
+                            <span class="s1">selectedLabelColor = EmeraldPrimary</span>
+                        <span class="s1">)</span><span class="s3">,</span>
+                        <span class="s1">modifier = Modifier.weight(</span><span class="s2">1f</span><span class="s1">)</span>
+                    <span class="s1">)</span>
+                    <span class="s1">FilterChip(</span>
+                        <span class="s1">selected = !isIncome</span><span class="s3">,</span>
+                        <span class="s1">onClick = {</span>
+                            <span class="s0">if </span><span class="s1">(type != TransactionType.EXPENSE) {</span>
+                                <span class="s1">type = TransactionType.EXPENSE</span>
+                                <span class="s1">selectedCategory = TransactionCategory.defaultFor(TransactionType.EXPENSE)</span>
+                            <span class="s1">}</span>
+                        <span class="s1">}</span><span class="s3">,</span>
+                        <span class="s1">label = {</span>
+                            <span class="s1">Box(Modifier.fillMaxWidth()</span><span class="s3">, </span><span class="s1">contentAlignment = Alignment.Center) {</span>
+                                <span class="s1">Text(</span><span class="s5">&quot;Gasto&quot;</span><span class="s3">, </span><span class="s1">fontWeight = FontWeight.SemiBold)</span>
+                            <span class="s1">}</span>
+                        <span class="s1">}</span><span class="s3">,</span>
+                        <span class="s1">colors = FilterChipDefaults.filterChipColors(</span>
+                            <span class="s1">selectedContainerColor = ExpenseRed.copy(alpha = </span><span class="s2">0.2f</span><span class="s1">)</span><span class="s3">,</span>
+                            <span class="s1">selectedLabelColor = ExpenseRed</span>
+                        <span class="s1">)</span><span class="s3">,</span>
+                        <span class="s1">modifier = Modifier.weight(</span><span class="s2">1f</span><span class="s1">)</span>
+                    <span class="s1">)</span>
+                <span class="s1">}</span>
+
+                <span class="s1">OutlinedTextField(</span>
+                    <span class="s1">value = name</span><span class="s3">,</span>
+                    <span class="s1">onValueChange = { name = it }</span><span class="s3">,</span>
+                    <span class="s1">label = { Text(</span><span class="s5">&quot;Nombre&quot;</span><span class="s1">) }</span><span class="s3">,</span>
+                    <span class="s1">placeholder = { Text(</span><span class="s0">if </span><span class="s1">(isIncome) </span><span class="s5">&quot;Ej. Nómina, Venta...&quot; </span><span class="s0">else </span><span class="s5">&quot;Ej. Supermercado...&quot;</span><span class="s1">) }</span><span class="s3">,</span>
+                    <span class="s1">singleLine = </span><span class="s0">true</span><span class="s3">,</span>
+                    <span class="s1">shape = RoundedCornerShape(</span><span class="s2">14</span><span class="s1">.dp)</span><span class="s3">,</span>
+                    <span class="s1">modifier = Modifier.fillMaxWidth()</span>
+                <span class="s1">)</span>
+
+                <span class="s1">OutlinedTextField(</span>
+                    <span class="s1">value = amountText</span><span class="s3">,</span>
+                    <span class="s1">onValueChange = { amountText = it }</span><span class="s3">,</span>
+                    <span class="s1">label = { Text(</span><span class="s5">&quot;Cantidad (€)&quot;</span><span class="s1">) }</span><span class="s3">,</span>
+                    <span class="s1">singleLine = </span><span class="s0">true</span><span class="s3">,</span>
+                    <span class="s1">keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)</span><span class="s3">,</span>
+                    <span class="s1">shape = RoundedCornerShape(</span><span class="s2">14</span><span class="s1">.dp)</span><span class="s3">,</span>
+                    <span class="s1">modifier = Modifier.fillMaxWidth()</span>
+                <span class="s1">)</span>
+
+                <span class="s1">Column(verticalArrangement = Arrangement.spacedBy(</span><span class="s2">6</span><span class="s1">.dp)) {</span>
+                    <span class="s1">Text(</span>
+                        <span class="s1">text = </span><span class="s5">&quot;Categoría&quot;</span><span class="s3">,</span>
+                        <span class="s1">fontSize = </span><span class="s2">12</span><span class="s1">.sp</span><span class="s3">,</span>
+                        <span class="s1">fontWeight = FontWeight.Medium</span><span class="s3">,</span>
+                        <span class="s1">color = MaterialTheme.colorScheme.onSurfaceVariant</span>
+                    <span class="s1">)</span>
+                    <span class="s1">FlowRow(</span>
+                        <span class="s1">horizontalArrangement = Arrangement.spacedBy(</span><span class="s2">6</span><span class="s1">.dp)</span><span class="s3">,</span>
+                        <span class="s1">verticalArrangement = Arrangement.spacedBy(</span><span class="s2">6</span><span class="s1">.dp)</span><span class="s3">,</span>
+                        <span class="s1">modifier = Modifier.fillMaxWidth()</span>
+                    <span class="s1">) {</span>
+                        <span class="s1">availableCategories.forEach { categoryItem -&gt;</span>
+                            <span class="s0">val </span><span class="s1">isCatSelected = selectedCategory == categoryItem</span>
+                            <span class="s1">FilterChip(</span>
+                                <span class="s1">selected = isCatSelected</span><span class="s3">,</span>
+                                <span class="s1">onClick = { selectedCategory = categoryItem }</span><span class="s3">,</span>
+                                <span class="s1">leadingIcon = {</span>
+                                    <span class="s1">Icon(</span>
+                                        <span class="s1">imageVector = categoryItem.icon</span><span class="s3">,</span>
+                                        <span class="s1">contentDescription = </span><span class="s0">null</span><span class="s3">,</span>
+                                        <span class="s1">modifier = Modifier.size(</span><span class="s2">16</span><span class="s1">.dp)</span>
+                                    <span class="s1">)</span>
+                                <span class="s1">}</span><span class="s3">,</span>
+                                <span class="s1">label = {</span>
+                                    <span class="s1">Text(</span>
+                                        <span class="s1">text = categoryItem.displayName</span><span class="s3">,</span>
+                                        <span class="s1">fontSize = </span><span class="s2">12</span><span class="s1">.sp</span><span class="s3">,</span>
+                                        <span class="s1">fontWeight = </span><span class="s0">if </span><span class="s1">(isCatSelected) FontWeight.SemiBold </span><span class="s0">else </span><span class="s1">FontWeight.Normal</span>
+                                    <span class="s1">)</span>
+                                <span class="s1">}</span><span class="s3">,</span>
+                                <span class="s1">shape = RoundedCornerShape(</span><span class="s2">12</span><span class="s1">.dp)</span><span class="s3">,</span>
+                                <span class="s1">colors = FilterChipDefaults.filterChipColors(</span>
+                                    <span class="s1">containerColor = MaterialTheme.colorScheme.surfaceVariant</span><span class="s3">,</span>
+                                    <span class="s1">labelColor = MaterialTheme.colorScheme.onSurfaceVariant</span><span class="s3">,</span>
+                                    <span class="s1">iconColor = MaterialTheme.colorScheme.onSurfaceVariant</span><span class="s3">,</span>
+                                    <span class="s1">selectedContainerColor = accentColor.copy(alpha = </span><span class="s2">0.22f</span><span class="s1">)</span><span class="s3">,</span>
+                                    <span class="s1">selectedLabelColor = accentColor</span><span class="s3">,</span>
+                                    <span class="s1">selectedLeadingIconColor = accentColor</span>
+                                <span class="s1">)</span><span class="s3">,</span>
+                                <span class="s1">border = FilterChipDefaults.filterChipBorder(</span>
+                                    <span class="s1">enabled = </span><span class="s0">true</span><span class="s3">,</span>
+                                    <span class="s1">selected = isCatSelected</span><span class="s3">,</span>
+                                    <span class="s1">borderColor = Color.Transparent</span><span class="s3">,</span>
+                                    <span class="s1">selectedBorderColor = accentColor.copy(alpha = </span><span class="s2">0.5f</span><span class="s1">)</span>
+                                <span class="s1">)</span>
+                            <span class="s1">)</span>
+                        <span class="s1">}</span>
+                    <span class="s1">}</span>
+                <span class="s1">}</span>
+
+                <span class="s1">OutlinedCard(</span>
+                    <span class="s1">onClick = { showDatePicker = </span><span class="s0">true </span><span class="s1">}</span><span class="s3">,</span>
+                    <span class="s1">shape = RoundedCornerShape(</span><span class="s2">14</span><span class="s1">.dp)</span><span class="s3">,</span>
+                    <span class="s1">border = BorderStroke(</span><span class="s2">1</span><span class="s1">.dp</span><span class="s3">, </span><span class="s1">MaterialTheme.colorScheme.outline.copy(alpha = </span><span class="s2">0.5f</span><span class="s1">))</span><span class="s3">,</span>
+                    <span class="s1">modifier = Modifier.fillMaxWidth()</span>
+                <span class="s1">) {</span>
+                    <span class="s1">Row(</span>
+                        <span class="s1">modifier = Modifier</span>
+                            <span class="s1">.fillMaxWidth()</span>
+                            <span class="s1">.padding(horizontal = </span><span class="s2">14</span><span class="s1">.dp</span><span class="s3">, </span><span class="s1">vertical = </span><span class="s2">12</span><span class="s1">.dp)</span><span class="s3">,</span>
+                        <span class="s1">verticalAlignment = Alignment.CenterVertically</span><span class="s3">,</span>
+                        <span class="s1">horizontalArrangement = Arrangement.SpaceBetween</span>
+                    <span class="s1">) {</span>
+                        <span class="s1">Column {</span>
+                            <span class="s1">Text(</span>
+                                <span class="s1">text = </span><span class="s5">&quot;Fecha&quot;</span><span class="s3">,</span>
+                                <span class="s1">fontSize = </span><span class="s2">11</span><span class="s1">.sp</span><span class="s3">,</span>
+                                <span class="s1">color = MaterialTheme.colorScheme.onSurfaceVariant</span>
+                            <span class="s1">)</span>
+                            <span class="s1">Text(</span>
+                                <span class="s1">text = formatDate(dateMillis)</span><span class="s3">,</span>
+                                <span class="s1">fontSize = </span><span class="s2">14</span><span class="s1">.sp</span><span class="s3">,</span>
+                                <span class="s1">fontWeight = FontWeight.Medium</span><span class="s3">,</span>
+                                <span class="s1">color = MaterialTheme.colorScheme.onSurface</span>
+                            <span class="s1">)</span>
+                        <span class="s1">}</span>
+                        <span class="s1">Icon(</span>
+                            <span class="s1">imageVector = Icons.Rounded.CalendarToday</span><span class="s3">,</span>
+                            <span class="s1">contentDescription = </span><span class="s5">&quot;Seleccionar fecha&quot;</span><span class="s3">,</span>
+                            <span class="s1">tint = accentColor</span><span class="s3">,</span>
+                            <span class="s1">modifier = Modifier.size(</span><span class="s2">20</span><span class="s1">.dp)</span>
+                        <span class="s1">)</span>
+                    <span class="s1">}</span>
+                <span class="s1">}</span>
+            <span class="s1">}</span>
+        <span class="s1">}</span><span class="s3">,</span>
+        <span class="s1">confirmButton = {</span>
+            <span class="s1">Button(</span>
+                <span class="s1">onClick = {</span>
+                    <span class="s0">val </span><span class="s1">amount = amountText.replace(</span><span class="s5">&quot;,&quot;</span><span class="s3">, </span><span class="s5">&quot;.&quot;</span><span class="s1">).toDoubleOrNull()</span>
+                    <span class="s0">if </span><span class="s1">(name.isNotBlank() &amp;&amp; amount != </span><span class="s0">null </span><span class="s1">&amp;&amp; amount &gt; </span><span class="s2">0</span><span class="s1">) {</span>
+                        <span class="s1">onSave(</span>
+                            <span class="s1">Transaction(</span>
+                                <span class="s1">id = existing?.id ?: UUID.randomUUID().toString()</span><span class="s3">,</span>
+                                <span class="s1">name = name.trim()</span><span class="s3">,</span>
+                                <span class="s1">amount = amount</span><span class="s3">,</span>
+                                <span class="s1">category = selectedCategory</span><span class="s3">,</span>
+                                <span class="s1">dateMillis = dateMillis</span><span class="s3">,</span>
+                                <span class="s1">type = type</span>
+                            <span class="s1">)</span>
+                        <span class="s1">)</span>
+                    <span class="s1">}</span>
+                <span class="s1">}</span><span class="s3">,</span>
+                <span class="s1">colors = ButtonDefaults.buttonColors(</span>
+                    <span class="s1">containerColor = accentColor</span><span class="s3">,</span>
+                    <span class="s1">contentColor = </span><span class="s0">if </span><span class="s1">(isIncome) DarkBackground </span><span class="s0">else </span><span class="s1">Color.White</span>
+                <span class="s1">)</span>
+            <span class="s1">) {</span>
+                <span class="s1">Text(</span><span class="s5">&quot;Guardar&quot;</span><span class="s3">, </span><span class="s1">fontWeight = FontWeight.Bold)</span>
+            <span class="s1">}</span>
+        <span class="s1">}</span><span class="s3">,</span>
+        <span class="s1">dismissButton = {</span>
+            <span class="s1">TextButton(onClick = onDismiss) {</span>
+                <span class="s1">Text(</span><span class="s5">&quot;Cancelar&quot;</span><span class="s3">, </span><span class="s1">color = MaterialTheme.colorScheme.onSurfaceVariant)</span>
+            <span class="s1">}</span>
+        <span class="s1">}</span>
+    <span class="s1">)</span>
+
+    <span class="s0">if </span><span class="s1">(showDatePicker) {</span>
+        <span class="s0">val </span><span class="s1">datePickerState = rememberDatePickerState(initialSelectedDateMillis = dateMillis)</span>
+        <span class="s1">DatePickerDialog(</span>
+            <span class="s1">onDismissRequest = { showDatePicker = </span><span class="s0">false </span><span class="s1">}</span><span class="s3">,</span>
+            <span class="s1">confirmButton = {</span>
+                <span class="s1">TextButton(</span>
+                    <span class="s1">onClick = {</span>
+                        <span class="s1">datePickerState.selectedDateMillis?.let { dateMillis = it }</span>
+                        <span class="s1">showDatePicker = </span><span class="s0">false</span>
+                    <span class="s1">}</span>
+                <span class="s1">) {</span>
+                    <span class="s1">Text(</span><span class="s5">&quot;Aceptar&quot;</span><span class="s3">, </span><span class="s1">color = EmeraldPrimary</span><span class="s3">, </span><span class="s1">fontWeight = FontWeight.Bold)</span>
+                <span class="s1">}</span>
+            <span class="s1">}</span><span class="s3">,</span>
+            <span class="s1">dismissButton = {</span>
+                <span class="s1">TextButton(onClick = { showDatePicker = </span><span class="s0">false </span><span class="s1">}) {</span>
+                    <span class="s1">Text(</span><span class="s5">&quot;Cancelar&quot;</span><span class="s1">)</span>
+                <span class="s1">}</span>
+            <span class="s1">}</span>
+        <span class="s1">) {</span>
+            <span class="s1">DatePicker(state = datePickerState)</span>
+        <span class="s1">}</span>
+    <span class="s1">}</span>
+<span class="s1">}</span>
+
+<span class="s0">fun </span><span class="s1">isCurrentMonth(millis: Long): Boolean {</span>
+    <span class="s0">val </span><span class="s1">now = Calendar.getInstance()</span>
+    <span class="s0">val </span><span class="s1">target = Calendar.getInstance().apply { timeInMillis = millis }</span>
+    <span class="s0">return </span><span class="s1">now.get(Calendar.YEAR) == target.get(Calendar.YEAR) &amp;&amp;</span>
+        <span class="s1">now.get(Calendar.MONTH) == target.get(Calendar.MONTH)</span>
+<span class="s1">}</span>
+
+<span class="s0">fun </span><span class="s1">formatCurrency(amount: Double): String {</span>
+    <span class="s0">return </span><span class="s1">String.format(Locale.GERMANY</span><span class="s3">, </span><span class="s5">&quot;%.2f €&quot;</span><span class="s3">, </span><span class="s1">amount)</span>
+<span class="s1">}</span>
+
+<span class="s0">fun </span><span class="s1">formatDate(millis: Long): String {</span>
+    <span class="s0">val </span><span class="s1">formatter = SimpleDateFormat(</span><span class="s5">&quot;dd/MM/yyyy&quot;</span><span class="s3">, </span><span class="s1">Locale.getDefault())</span>
+    <span class="s0">return </span><span class="s1">formatter.format(Date(millis))</span>
+<span class="s1">}</span>
+
+<span class="s1">@Preview(showBackground = </span><span class="s0">true</span><span class="s1">)</span>
+<span class="s1">@Composable</span>
+<span class="s0">fun </span><span class="s1">MoneyTrackPreview() {</span>
+    <span class="s1">MoneyTrackTheme {</span>
+        <span class="s1">MoneyTrackApp()</span>
+    <span class="s1">}</span>
+<span class="s1">}</span></pre>
+</body>
+</html>
